@@ -1,0 +1,1 @@
+export const ADMINTOOL_URL = 'https://admintool.eminium.ovh'

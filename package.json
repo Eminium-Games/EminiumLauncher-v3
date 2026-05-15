@@ -1,0 +1,127 @@
+{
+  "name": "eminium-games-launcher",
+  "productName": "Eminium Games Launcher",
+  "author": "Fourty3000",
+  "description": "Launcher for Eminium Games",
+  "private": true,
+  "version": "1.2.1",
+  "license": "MIT",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "release:win": "npm run build && electron-builder --win",
+    "release:mac": "npm run build && electron-builder --mac",
+    "release:lin": "npm run build && electron-builder --linux"
+  },
+  "build": {
+    "appId": "ovh.eminiumgames.launcher",
+    "productName": "Eminium Games Launcher",
+    "copyright": "Copyright © 2026 Eminium Games",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist",
+      "dist-electron",
+      "package.json",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "publish": {
+      "provider": "generic",
+      "url": "https://eminiumgames.pages.dev/"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "legalTrademarks": "Eminium Games"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Eminium Games Launcher",
+      "deleteAppDataOnUninstall": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "uninstallDisplayName": "Eminium Games Launcher"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.games",
+      "icon": "build/icon.icns",
+      "darkModeSupport": true,
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "artifactName": "${productName}-${version}.${ext}"
+    },
+    "dmg": {
+      "background": "build/background.png",
+      "icon": "build/dmg-icon.icns",
+      "iconSize": 100,
+      "contents": [
+        {
+          "x": 130,
+          "y": 190
+        },
+        {
+          "x": 410,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 430
+      }
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "icon": "build/icon.png",
+      "category": "Game",
+      "description": "Launcher for Eminium Games",
+      "artifactName": "${productName}-${version}.${ext}"
+    }
+  },
+  "dependencies": {
+    "dompurify": "^3.4.2",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.3",
+    "eml-lib": "^2.3.5",
+    "marked": "^18.0.3",
+    "skinview3d": "^3.4.1"
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
+    "prettier": "^3.8.3",
+    "sass-embedded": "^1.99.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vite-plugin-electron": "^0.29.1"
+  }
+}
