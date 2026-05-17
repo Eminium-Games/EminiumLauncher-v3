@@ -25,7 +25,8 @@ console.log('Preload script loaded')
 contextBridge.exposeInMainWorld('api', {
   auth: {
     login: (): Promise<IAuthResponse> => ipcRenderer.invoke('auth:login'),
-    loginAz: (payload: { username: string; password: string; twoFACode?: string }): Promise<IAuthResponse> => ipcRenderer.invoke('auth:login-az', payload),
+    loginAz: (payload: { username: string; password: string; twoFACode?: string }): Promise<IAuthResponse> =>
+      ipcRenderer.invoke('auth:login-az', payload),
     refresh: (): Promise<IAuthResponse> => ipcRenderer.invoke('auth:refresh'),
     logout: (): Promise<{ success: boolean }> => ipcRenderer.invoke('auth:logout')
   },
@@ -127,6 +128,12 @@ contextBridge.exposeInMainWorld('api', {
   },
   system: {
     getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info')
+  },
+  updater: {
+    checkNow: (): Promise<any> => ipcRenderer.invoke('updater:checkNow'),
+    debugSimulate: (): Promise<any> => ipcRenderer.invoke('updater:debugSimulate'),
+    onProgress: (callback: (value: any) => void) => ipcRenderer.on('updater:progress', (_event, value) => callback(value)),
+    onStatus: (callback: (value: any) => void) => ipcRenderer.on('updater:status', (_event, value) => callback(value))
   }
 })
 

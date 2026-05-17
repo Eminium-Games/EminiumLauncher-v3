@@ -42,6 +42,32 @@ export async function bootstrap() {
     }
   }
 
+  // Updater events
+  if (window.api?.updater) {
+    window.api.updater.onStatus((s: any) => {
+      if (!s) return
+      if (s.status === 'found') {
+        setIndeterminate(false)
+        progressBar!.style.width = '0%'
+        progressLabel!.innerText = 'Preparing launcher update...'
+        progressPercent!.innerText = '0%'
+        setBlockingView('update')
+      } else if (s.status === 'updated') {
+        progressLabel!.innerText = 'Update applied, restarting...'
+      } else if (s.status === 'error') {
+        progressLabel!.innerText = 'Update failed. Continuing with current version.'
+        logger.error('Updater error', s.error)
+      }
+    })
+
+    window.api.updater.onProgress((p: any) => {
+      if (!p) return
+      const percent = Math.round((p.index / p.total) * 100)
+      progressPercent!.innerText = `${percent}%`
+      progressBar!.style.width = `${percent}%`
+    })
+  }
+
   const up = await bootstraps.check()
   const bg = await background.get()
   const mn = await maintenance.get()

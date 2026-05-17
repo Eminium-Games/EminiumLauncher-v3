@@ -67,7 +67,7 @@ declare global {
         error: (callback: (value: BootstrapsEvents['bootstraps_error'][0]) => void) => void
       }
       game: {
-        launch: (payload: { account: Account; settings: IGameSettings, profileSlug: string }) => Promise<void>
+        launch: (payload: { account: Account; settings: IGameSettings; profileSlug: string }) => Promise<void>
 
         launchComputeDownload: (callback: () => void) => void
 
@@ -111,6 +111,12 @@ declare global {
       }
       system: {
         getInfo: () => Promise<ISystemInfo>
+      }
+      updater: {
+        checkNow: () => Promise<any>
+        debugSimulate: () => Promise<any>
+        onProgress: (callback: (value: any) => void) => void
+        onStatus: (callback: (value: any) => void) => void
       }
     }
   }
@@ -167,7 +173,7 @@ export const bootstraps = {
 }
 
 export const game = {
-  launch: async (payload: { account: Account; settings: IGameSettings, profileSlug: string }) => await window.api.game.launch(payload),
+  launch: async (payload: { account: Account; settings: IGameSettings; profileSlug: string }) => await window.api.game.launch(payload),
   launchComputeDownload: (callback: () => void) => window.api.game.launchComputeDownload(callback),
   launchDownload: (callback: (value: LauncherEvents['launch_download'][0]) => void) => window.api.game.launchDownload(callback),
   downloadProgress: (callback: (value: DownloaderEvents['download_progress'][0]) => void) => window.api.game.downloadProgress(callback),
@@ -206,5 +212,4 @@ export const settings = {
 export const system = {
   getInfo: () => window.api.system.getInfo()
 }
-
 

@@ -11,6 +11,7 @@ import { registerBootstrapHandlers } from './handlers/bootstraps'
 import logger from 'electron-log/main'
 import { registerProfilesHandlers } from './handlers/profiles'
 import { registerSkinHandlers } from './handlers/skin'
+import { registerUpdaterHandlers } from './handlers/updater'
 
 const APP_TITLE = 'Eminium Games Launcher'
 const BG_COLOR = '#121212'
@@ -99,7 +100,15 @@ function configureAppMenu() {
 
     {
       label: 'Edit',
-      submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }]
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
     },
 
     {
@@ -127,6 +136,7 @@ app.whenReady().then(() => {
     registerMaintenanceHandlers()
     registerBootstrapHandlers(mainWindow)
     registerLauncherHandlers(mainWindow)
+    registerUpdaterHandlers(mainWindow)
     registerSettingsHandlers()
   }
 })
