@@ -1,6 +1,7 @@
 import { setBlockingView, setUser, setView } from './state'
 import { auth, background, bootstraps, maintenance, skin } from './ipc'
 import logger from 'electron-log/renderer'
+import { Dialog } from './views/dialog'
 
 const DEFAULT_BACKGROUND = '/src/static/images/bg.png'
 const dateFormatOptions: Intl.DateTimeFormatOptions = {
@@ -29,6 +30,7 @@ export async function bootstrap() {
   const progressBar = document.getElementById('update-progress-bar')
   const progressLabel = document.getElementById('update-progress-label')
   const progressPercent = document.getElementById('update-progress-percent')
+  let updatePopupShown = false
 
   const setIndeterminate = (active: boolean) => {
     if (!progressBar || !progressPercent) return
@@ -47,6 +49,15 @@ export async function bootstrap() {
     window.api.updater.onStatus((s: any) => {
       if (!s) return
       if (s.status === 'found') {
+        if (!updatePopupShown) {
+          updatePopupShown = true
+          void Dialog.show(
+            'Une mise a jour du launcher est disponible. Le telechargement commence maintenant.',
+            [{ text: 'OK', type: 'ok' }],
+            'Mise a jour'
+          )
+        }
+
         setIndeterminate(false)
         progressBar!.style.width = '0%'
         progressLabel!.innerText = 'Preparing launcher update...'
@@ -56,6 +67,11 @@ export async function bootstrap() {
         progressLabel!.innerText = 'Update applied, restarting...'
       } else if (s.status === 'error') {
         progressLabel!.innerText = 'Update failed. Continuing with current version.'
+        void Dialog.show(
+          'La mise a jour a echoue. Le launcher continue avec la version actuelle.',
+          [{ text: 'OK', type: 'ok' }],
+          'Erreur de mise a jour'
+        )
         logger.error('Updater error', s.error)
       }
     })
@@ -137,3 +153,4 @@ export async function bootstrap() {
     document.body.classList.add('loaded')
   }
 }
+
