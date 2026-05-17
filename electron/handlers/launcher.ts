@@ -3,7 +3,7 @@ import { Launcher } from 'eml-lib'
 import type { Account, IProfile } from 'eml-lib'
 import type { IGameSettings } from './settings'
 import logger from 'electron-log/main'
-import { ADMINTOOL_URL } from '../const'
+import { ADMINTOOL_URL, AUTO_START_MINECRAFT } from '../const'
 
 export function registerLauncherHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle('game:launch', (_event, payload: { account: Account; settings: IGameSettings; profileSlug: string }) => {
@@ -15,9 +15,10 @@ export function registerLauncherHandlers(mainWindow: BrowserWindow) {
       url: ADMINTOOL_URL,
       root: 'eminiumgames',
       profile: { slug: profileSlug },
+      minecraft: AUTO_START_MINECRAFT,
       account: account,
       cleaning: {
-        enabled: false
+        enabled: true
       },
       java: java,
       memory: {

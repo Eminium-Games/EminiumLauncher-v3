@@ -73,6 +73,46 @@ class DialogSystem {
     })
   }
 
+  public async prompt(title: string, message: string, inputType: 'text' | 'password' = 'text'): Promise<string | null> {
+    return new Promise<string | null>((resolve) => {
+      this.messageEl.innerHTML = `${message}<br><input type="${inputType}" id="dialog-input" class="dialog-input" style="width: 100%; padding: 10px; margin-top: 15px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg); color: white;" />`
+      this.buttonsEl.innerHTML = ''
+
+      this.titleEl.innerText = title
+      this.titleEl.classList.remove('hidden')
+
+      const okBtn = document.createElement('button')
+      okBtn.innerText = 'OK'
+      okBtn.className = 'btn btn-secondary'
+      okBtn.onclick = () => {
+        const input = document.getElementById('dialog-input') as HTMLInputElement
+        this.close()
+        resolve(input.value || null)
+      }
+
+      const cancelBtn = document.createElement('button')
+      cancelBtn.innerText = 'Cancel'
+      cancelBtn.className = 'btn btn-secondary'
+      cancelBtn.onclick = () => {
+        this.close()
+        resolve(null)
+      }
+
+      this.buttonsEl.appendChild(cancelBtn)
+      this.buttonsEl.appendChild(okBtn)
+
+      this.overlay.classList.remove('hidden')
+
+      const input = document.getElementById('dialog-input') as HTMLInputElement
+      input.focus()
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          okBtn.click()
+        }
+      })
+    })
+  }
+
   private close() {
     this.overlay.classList.add('hidden')
   }

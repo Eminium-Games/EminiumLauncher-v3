@@ -26,6 +26,7 @@ declare global {
     api: {
       auth: {
         login: () => Promise<IAuthResponse>
+        loginAz: (payload: { username: string; password: string; twoFACode?: string }) => Promise<IAuthResponse>
         refresh: () => Promise<IAuthResponse>
         logout: () => Promise<{ success: boolean }>
       }
@@ -117,6 +118,7 @@ declare global {
 
 export const auth = {
   login: async () => await window.api.auth.login(),
+  loginAz: async (payload: { username: string; password: string; twoFACode?: string }) => await window.api.auth.loginAz(payload),
   logout: async () => await window.api.auth.logout(),
   refresh: async () => await window.api.auth.refresh()
 }

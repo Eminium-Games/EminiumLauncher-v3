@@ -55,7 +55,8 @@ export function initHome() {
   const loadProfiles = async () => {
     allProfiles = await profiles.get()
     if (allProfiles.length > 0) {
-      selectProfile(allProfiles[0])
+      const preferredProfile = allProfiles.find((profile) => profile.slug === 'eminium-factions') ?? allProfiles[0]
+      selectProfile(preferredProfile)
       renderDropdown()
     }
   }
@@ -184,6 +185,15 @@ export function initHome() {
   })
 
   playBtn?.addEventListener('click', async () => {
+    if (!selectedProfile) {
+      await loadProfiles()
+    }
+
+    if (!selectedProfile) {
+      logger.error('No server profile available, launch cancelled')
+      return
+    }
+
     setIndeterminate(true)
     if (playBtn) playBtn.style.display = 'none'
     if (progressContainer) progressContainer.classList.remove('hidden')
@@ -206,7 +216,7 @@ Ready to launch the game with the following settings:
     `
 
     logger.log(message)
-    game.launch({ account: user, settings: config, profileSlug: selectedProfile?.slug })
+    game.launch({ account: user, settings: config, profileSlug: 'eminium-factions' })
   })
 
   profileSelector?.querySelector('.selected-profile')?.addEventListener('click', () => {
@@ -272,8 +282,3 @@ Ready to launch the game with the following settings:
     }, 10000)
   })
 }
-
-
-
-
-

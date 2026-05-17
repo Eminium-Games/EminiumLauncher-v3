@@ -25,6 +25,7 @@ console.log('Preload script loaded')
 contextBridge.exposeInMainWorld('api', {
   auth: {
     login: (): Promise<IAuthResponse> => ipcRenderer.invoke('auth:login'),
+    loginAz: (payload: { username: string; password: string; twoFACode?: string }): Promise<IAuthResponse> => ipcRenderer.invoke('auth:login-az', payload),
     refresh: (): Promise<IAuthResponse> => ipcRenderer.invoke('auth:refresh'),
     logout: (): Promise<{ success: boolean }> => ipcRenderer.invoke('auth:logout')
   },

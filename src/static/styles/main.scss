@@ -198,3 +198,17 @@ a {
     border-color: #666;
   }
 }
+
+/* Brand Button: Eminium */
+.btn-eminium {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 1px solid #5a67d8;
+  width: 100%;
+  margin-top: 10px;
+
+  &:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    border-color: #4c51bf;
+  }
+}

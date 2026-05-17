@@ -85,20 +85,19 @@ export async function bootstrap() {
     setBlockingView('maintenance')
     return
   }
+
   try {
-    const [_, session] = await Promise.all([
-      preloadImage(bgUrl),
-      auth.refresh(),
-    ])
+    const [_, session] = await Promise.all([preloadImage(bgUrl), auth.refresh()])
 
     if (bgElement) bgElement.style.backgroundImage = `url('${bgUrl}')`
 
     if (session.success) {
+      logger.log(`Session restored: ${(session.account as any).name}`)
       const [__, skins, capes, avatar] = await Promise.all([skin.reload(session.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
-
       setUser(session.account, { skins, capes, avatar })
       setView('home')
     } else {
+      logger.log('No session found - showing login')
       setView('login')
     }
   } catch (err) {
@@ -112,4 +111,3 @@ export async function bootstrap() {
     document.body.classList.add('loaded')
   }
 }
-
