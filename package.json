@@ -44,7 +44,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico",
+      "icon": "build/icon.png",
       "legalTrademarks": "Eminium Games"
     },
     "nsis": {
@@ -125,3 +125,4 @@
     "vite-plugin-electron": "^0.29.1"
   }
 }
+
