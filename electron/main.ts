@@ -1,65 +1,141 @@
-import { app, BrowserWindow, Menu, nativeTheme, shell } from 'electron'
+import { app, Details, BrowserWindow, Menu, MenuItemConstructorOptions, nativeTheme, session, shell } from 'electron'
+
 import path from 'node:path'
+
 import { registerAuthHandlers } from './handlers/auth'
-import { registerLauncherHandlers } from './handlers/launcher'
-import { registerSettingsHandlers } from './handlers/settings'
-import { registerServerHandlers } from './handlers/server'
-import { registerNewsHandlers } from './handlers/news'
 import { registerBackgroundHandlers } from './handlers/background'
-import { registerMaintenanceHandlers } from './handlers/maintenance'
 import { registerBootstrapHandlers } from './handlers/bootstraps'
-import logger from 'electron-log/main'
+import { registerLauncherHandlers } from './handlers/launcher'
+import { registerMaintenanceHandlers } from './handlers/maintenance'
+import { registerNewsHandlers } from './handlers/news'
 import { registerProfilesHandlers } from './handlers/profiles'
+import { registerServerHandlers } from './handlers/server'
+import { registerSettingsHandlers } from './handlers/settings'
 import { registerSkinHandlers } from './handlers/skin'
 import { registerUpdaterHandlers } from './handlers/updater'
 
+import logger from 'electron-log/main'
+
 const APP_TITLE = 'Eminium Games Launcher'
 const BG_COLOR = '#121212'
+const DEFAULT_WINDOW_WIDTH = 1280
+const DEFAULT_WINDOW_HEIGHT = 720
+const MIN_WINDOW_WIDTH = 1000
+const MIN_WINDOW_HEIGHT = 700
+const CSP_DIRECTIVE = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: https:",
+  "connect-src 'self' https:",
+  "font-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "manifest-src 'self'"
+].join('; ')
 
 let mainWindow: BrowserWindow | null = null
 
-if (process.env.VITE_DEV_SERVER_URL) {
-  app.setName(APP_TITLE)
+function resolvePreloadPath() {
+  return path.join(__dirname, 'preload.js')
 }
 
-function createWindow() {
+function resolveRendererPath() {
+  return path.join(__dirname, '../dist/index.html')
+}
+
+function resolveIconPath() {
+  return path.join(__dirname, '../build/icon.png')
+}
+
+function enforceContentSecurityPolicy() {
+  session.defaultSession.webRequest.onHeadersReceived((details, respond) => {
+    respond({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [CSP_DIRECTIVE]
+      }
+    })
+  })
+
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, permit) => {
+    const PERMITTED = new Set<string>(['clipboard-read'])
+
+    permit(PERMITTED.has(permission))
+  })
+}
+
+function decideWindowOpen({ url }: { url: string }) {
+  if (url.startsWith('https:') || url.startsWith('http:')) {
+    shell.openExternal(url)
+  }
+
+  return { action: 'deny' as const }
+}
+
+function repelForeignNavigation(event: Electron.Event, destinationUrl: string) {
+  const allowedOrigin = `file://${resolveRendererPath().replace(/\\/g, '/')}`
+
+  if (destinationUrl !== allowedOrigin && !destinationUrl.startsWith('file://')) {
+    event.preventDefault()
+  }
+}
+
+function forgeSecureWindow() {
   nativeTheme.themeSource = 'dark'
 
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    minWidth: 1000,
-    minHeight: 700,
+    width: DEFAULT_WINDOW_WIDTH,
+    height: DEFAULT_WINDOW_HEIGHT,
+    minWidth: MIN_WINDOW_WIDTH,
+    minHeight: MIN_WINDOW_HEIGHT,
     title: APP_TITLE,
     autoHideMenuBar: true,
     backgroundColor: BG_COLOR,
     show: false,
-    icon: path.join(__dirname, '../build/icon.png'),
+    icon: resolveIconPath(),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: resolvePreloadPath(),
       nodeIntegration: false,
       contextIsolation: true,
-      devTools: true
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false,
+      devTools: !app.isPackaged,
+      spellcheck: false,
+      disableDialogs: false,
+      navigateOnDragDrop: false
     }
   })
 
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:') || url.startsWith('http:')) {
-      shell.openExternal(url)
-    }
-    return { action: 'deny' }
+  mainWindow.webContents.setWindowOpenHandler(decideWindowOpen)
+  mainWindow.webContents.on('will-navigate', repelForeignNavigation)
+  mainWindow.webContents.on('will-attach-webview', (event) => {
+    event.preventDefault()
   })
-
-  // mainWindow.removeMenu()
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
+  loadRendererSafely()
+}
+
+function loadRendererSafely() {
+  if (!mainWindow) {
+    return
+  }
+
+  const devServerUrl = process.env.VITE_DEV_SERVER_URL
+
+  if (devServerUrl) {
+    mainWindow.loadURL(devServerUrl)
+    mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    mainWindow.loadFile(resolveRendererPath())
   }
 }
 
@@ -67,15 +143,25 @@ function configureAppMenu() {
   app.setAboutPanelOptions({
     applicationName: APP_TITLE,
     applicationVersion: app.getVersion(),
-    version: 'Build 2026.1',
     copyright: 'Copyright © 2026 Eminium Games',
     credits: 'Developed with EML Lib & Electron',
-    iconPath: path.join(__dirname, '../build/icon.png')
+    iconPath: resolveIconPath()
   })
 
-  const template: any[] = [
+  const viewSubmenu: Electron.MenuItemConstructorOptions[] = [
+    { role: 'reload' },
+    { role: 'forceReload' },
+    { type: 'separator' },
+    { role: 'togglefullscreen' }
+  ]
+
+  if (!app.isPackaged) {
+    viewSubmenu.push({ type: 'separator' }, { role: 'toggleDevTools' })
+  }
+
+  const template: Electron.MenuItemConstructorOptions[] = [
     ...(process.platform === 'darwin'
-      ? [
+      ? ([
           {
             label: app.name,
             submenu: [
@@ -90,14 +176,10 @@ function configureAppMenu() {
               { role: 'quit' }
             ]
           }
-        ]
+        ] as MenuItemConstructorOptions[])
       : []),
-
-    {
-      label: 'File',
-      submenu: [{ role: 'close' }]
-    },
-
+    { label: 'File', submenu: [{ role: 'close' }] },
+    { label: 'View', submenu: viewSubmenu },
     {
       label: 'Edit',
       submenu: [
@@ -110,38 +192,51 @@ function configureAppMenu() {
         { role: 'selectAll' }
       ]
     },
-
-    {
-      label: 'View',
-      submenu: [{ role: 'reload' }, { role: 'forceReload' }, { role: 'toggleDevTools' }, { type: 'separator' }, { role: 'togglefullscreen' }]
-    }
+    { label: 'View', submenu: viewSubmenu }
   ]
 
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
 
-app.whenReady().then(() => {
-  logger.initialize()
-  configureAppMenu()
-  createWindow()
-
-  if (mainWindow) {
-    registerAuthHandlers(mainWindow)
-    registerProfilesHandlers()
-    registerServerHandlers()
-    registerSkinHandlers()
-    registerNewsHandlers()
-    registerBackgroundHandlers()
-    registerMaintenanceHandlers()
-    registerBootstrapHandlers(mainWindow)
-    registerLauncherHandlers(mainWindow)
-    registerUpdaterHandlers(mainWindow)
-    registerSettingsHandlers()
+function wireIpcHandlers() {
+  if (!mainWindow) {
+    return
   }
-})
+
+  registerAuthHandlers(mainWindow)
+  registerProfilesHandlers()
+  registerServerHandlers()
+  registerSkinHandlers()
+  registerNewsHandlers()
+  registerBackgroundHandlers()
+  registerMaintenanceHandlers()
+  registerBootstrapHandlers(mainWindow)
+  registerLauncherHandlers(mainWindow)
+  registerUpdaterHandlers(mainWindow)
+  registerSettingsHandlers()
+}
+
+function bootstrapApplication() {
+  logger.initialize()
+  enforceContentSecurityPolicy()
+  configureAppMenu()
+  forgeSecureWindow()
+  wireIpcHandlers()
+}
+
+app.whenReady().then(bootstrapApplication)
 
 app.on('window-all-closed', () => {
   app.quit()
 })
 
+app.on('web-contents-created', (_event, contents) => {
+  contents.setWindowOpenHandler(decideWindowOpen)
+  contents.on('will-navigate', repelForeignNavigation)
+})
+
+app.on('child-process-gone', (event: Electron.Event, details: Details) => {
+  if (details.type === 'GPU') {
+    logger.error('GPU process crashed', { reason: details.reason })
+  }
+})

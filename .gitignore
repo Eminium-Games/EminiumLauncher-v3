@@ -26,3 +26,18 @@ release
 
 /dist-electron
 dist-electron/preload.js
+
+# --- Ahead-of-Time Bug Prediction workflow (.github/workflows/bug-prediction.yml) ---
+# Working directories created locally when running the analyzers outside CI.
+# Note: .bugpredict/node_modules is already covered by the generic
+# `node_modules` pattern above.
+raw/
+results/
+report/
+collected-results/
+changed_files.json
+*_files.txt
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
