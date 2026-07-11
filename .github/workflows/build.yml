@@ -22,6 +22,7 @@ jobs:
           - os: macos-latest
             build-command: npm run release:mac
             artifact-name: macos
+            skip-codesign: true
 
     runs-on: ${{ matrix.os }}
 
@@ -40,6 +41,7 @@ jobs:
         shell: bash
         env:
           SKIP_NOTARIZE: 'true'
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ matrix.skip-codesign && 'false' || 'true' }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
