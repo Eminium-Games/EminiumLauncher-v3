@@ -25,10 +25,10 @@ const MIN_WINDOW_HEIGHT = 700
 const CSP_DIRECTIVE = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https:",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+  "img-src 'self' data: http: https:",
   "connect-src 'self' https:",
-  "font-src 'self' data:",
+  "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

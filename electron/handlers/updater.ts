@@ -1,75 +1,112 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-
-import { autoUpdater } from 'electron-updater'
-
+import { exec } from 'child_process'
+import { promises as fs } from 'fs'
+import * as path from 'path'
 import logger from 'electron-log/main'
 
+const GITHUB_OWNER = 'Eminium-Games'
+const GITHUB_REPO = 'EminiumLauncher-v3'
+const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`
+const LAST_COMMIT_FILE = 'last-commit.txt'
 const AUTO_CHECK_DELAY_MS = 60_000
 const MIN_UPDATE_INTERVAL_MS = 30_000
-const PUBLISHER_NAME = 'Eminium Games'
 
 let lastCheckEpoch = 0
 let updateInProgress = false
 
-type UpdateStatus =
-  | { status: 'checking' }
-  | { status: 'available'; version: string }
-  | { status: 'not-available' }
-  | { status: 'downloading'; percent: number }
-  | { status: 'downloaded'; version: string }
-  | { status: 'error'; error: string }
-
-function broadcastStatus(mainWindow: BrowserWindow, status: UpdateStatus) {
+function broadcastStatus(mainWindow: BrowserWindow, status: Record<string, unknown>) {
   if (!mainWindow.isDestroyed()) {
     mainWindow.webContents.send('updater:status', status)
   }
 }
 
-function broadcastProgress(mainWindow: BrowserWindow, percent: number) {
+function broadcastProgress(mainWindow: BrowserWindow, index: number, total: number) {
   if (!mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('updater:progress', { percent })
+    mainWindow.webContents.send('updater:progress', { index, total })
   }
 }
 
-function configureAutoUpdater(mainWindow: BrowserWindow) {
-  autoUpdater.autoDownload = true
-  autoUpdater.autoInstallOnAppQuit = true
-  autoUpdater.allowDowngrade = false
-  autoUpdater.allowPrerelease = false
-  autoUpdater.disableWebInstaller = false
-  // autoUpdater.verifyUpdateCodeSignature = true
-  autoUpdater.requestHeaders = { 'User-Agent': `${PUBLISHER_NAME}-Launcher/${app.getVersion()}` }
+function getLastCommitPath(): string {
+  return path.join(app.getPath('userData'), LAST_COMMIT_FILE)
+}
 
-  autoUpdater.on('checking-for-update', () => {
-    broadcastStatus(mainWindow, { status: 'checking' })
-  })
+async function readLastCommit(): Promise<string | null> {
+  try {
+    return await fs.readFile(getLastCommitPath(), 'utf-8')
+  } catch {
+    return null
+  }
+}
 
-  autoUpdater.on('update-available', (info) => {
-    broadcastStatus(mainWindow, { status: 'available', version: info.version })
-  })
+async function writeLastCommit(sha: string): Promise<void> {
+  await fs.mkdir(path.dirname(getLastCommitPath()), { recursive: true })
+  await fs.writeFile(getLastCommitPath(), sha, 'utf-8')
+}
 
-  autoUpdater.on('update-not-available', () => {
-    broadcastStatus(mainWindow, { status: 'not-available' })
-  })
+async function fetchLatestCommitSha(): Promise<string | null> {
+  try {
+    const response = await fetch(`${GITHUB_API_BASE}/commits/main`, {
+      headers: {
+        'User-Agent': 'Eminium-Games-Launcher/1.0',
+        Accept: 'application/vnd.github.v3+json',
+      },
+    })
+    if (!response.ok) {
+      logger.warn(`GitHub API returned ${response.status} for commit check`)
+      return null
+    }
+    const data = (await response.json()) as { sha: string }
+    return data.sha ?? null
+  } catch (error) {
+    logger.error('Failed to fetch latest commit:', error)
+    return null
+  }
+}
 
-  autoUpdater.on('download-progress', (progress) => {
-    broadcastProgress(mainWindow, Math.round(progress.percent))
-  })
-
-  autoUpdater.on('update-downloaded', (info) => {
-    broadcastStatus(mainWindow, { status: 'downloaded', version: info.version })
-  })
-
-  autoUpdater.on('error', (error) => {
-    updateInProgress = false
-    broadcastStatus(mainWindow, { status: 'error', error: error?.message ?? String(error) })
-    logger.error('Updater error', error)
+function execAsync(command: string, cwd: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    exec(command, { cwd }, (error, stdout, stderr) => {
+      if (error) reject(new Error(stderr || error.message))
+      else resolve(stdout || stderr)
+    })
   })
 }
 
-async function fetchVerifiedReleaseManifest(mainWindow: BrowserWindow) {
-  const now = Date.now()
+function getProjectRoot(): string {
+  return path.resolve(__dirname, '..')
+}
 
+async function performGitUpdate(mainWindow: BrowserWindow, latestSha: string) {
+  const projectRoot = getProjectRoot()
+  const totalSteps = 3
+
+  broadcastProgress(mainWindow, 0, totalSteps)
+
+  broadcastProgress(mainWindow, 0, totalSteps)
+  logger.log('Pulling latest changes...')
+  await execAsync('git pull', projectRoot)
+
+  broadcastProgress(mainWindow, 1, totalSteps)
+  logger.log('Installing dependencies...')
+  await execAsync('npm install', projectRoot)
+
+  broadcastProgress(mainWindow, 2, totalSteps)
+  logger.log('Building project...')
+  await execAsync('npm run build', projectRoot)
+
+  broadcastProgress(mainWindow, totalSteps, totalSteps)
+  await writeLastCommit(latestSha)
+
+  broadcastStatus(mainWindow, { status: 'updated' })
+
+  setTimeout(() => {
+    app.relaunch()
+    app.exit(0)
+  }, 1500)
+}
+
+async function checkForUpdates(mainWindow: BrowserWindow) {
+  const now = Date.now()
   if (updateInProgress || now - lastCheckEpoch < MIN_UPDATE_INTERVAL_MS) {
     return { updated: false, skipped: true }
   }
@@ -78,38 +115,55 @@ async function fetchVerifiedReleaseManifest(mainWindow: BrowserWindow) {
   updateInProgress = true
 
   try {
-    await autoUpdater.checkForUpdates()
+    if (app.isPackaged) {
+      broadcastStatus(mainWindow, { status: 'error', error: 'Auto-update not available in production mode' })
+      return { updated: false }
+    }
 
-    return { updated: false }
+    const latestSha = await fetchLatestCommitSha()
+    if (!latestSha) {
+      broadcastStatus(mainWindow, { status: 'error', error: 'Cannot check for updates from GitHub' })
+      return { updated: false }
+    }
+
+    const lastSha = await readLastCommit()
+
+    if (lastSha === null) {
+      await writeLastCommit(latestSha)
+      broadcastStatus(mainWindow, { status: 'not-available' })
+      return { updated: false }
+    }
+
+    if (lastSha === latestSha) {
+      broadcastStatus(mainWindow, { status: 'not-available' })
+      return { updated: false }
+    }
+
+    broadcastStatus(mainWindow, { status: 'found' })
+    await performGitUpdate(mainWindow, latestSha)
+    return { updated: true }
   } catch (error) {
-    broadcastStatus(mainWindow, {
-      status: 'error',
-      error: error instanceof Error ? error.message : String(error)
-    })
-
-    return { updated: false, error }
+    const message = error instanceof Error ? error.message : String(error)
+    broadcastStatus(mainWindow, { status: 'error', error: message })
+    logger.error('Update failed:', error)
+    return { updated: false }
   } finally {
     updateInProgress = false
   }
 }
 
-async function applySignedUpdate() {
-  if (!updateInProgress) {
-    return
-  }
-
-  await autoUpdater.quitAndInstall(false, true)
-}
-
 export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
-  configureAutoUpdater(mainWindow)
-
-  ipcMain.handle('updater:checkNow', () => fetchVerifiedReleaseManifest(mainWindow))
-  ipcMain.handle('updater:installNow', () => applySignedUpdate())
+  ipcMain.handle('updater:checkNow', () => checkForUpdates(mainWindow))
+  ipcMain.handle('updater:installNow', () => {
+    if (!app.isPackaged) {
+      app.relaunch()
+      app.exit(0)
+    }
+  })
 
   setTimeout(() => {
-    fetchVerifiedReleaseManifest(mainWindow).catch((error) => {
-      logger.error('Auto updater check failed', error)
+    checkForUpdates(mainWindow).catch((error) => {
+      logger.error('Auto updater check failed:', error)
     })
   }, AUTO_CHECK_DELAY_MS)
 }

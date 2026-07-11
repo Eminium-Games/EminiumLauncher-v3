@@ -138,7 +138,7 @@ const rendererApi = {
   updater: {
     checkNow: (): Promise<{ updated: boolean }> => ipcRenderer.invoke('updater:checkNow'),
     installNow: (): Promise<void> => ipcRenderer.invoke('updater:installNow'),
-    onProgress: (callback: ProgressCallback<{ percent: number }>) => bindEvent('updater:progress', callback),
+    onProgress: (callback: ProgressCallback<{ index: number; total: number }>) => bindEvent('updater:progress', callback),
     onStatus: (callback: ProgressCallback<{ status: string; error?: string }>) => bindEvent('updater:status', callback)
   }
 }
