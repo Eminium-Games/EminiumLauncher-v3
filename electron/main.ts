@@ -51,6 +51,8 @@ function resolveIconPath() {
 }
 
 function enforceContentSecurityPolicy() {
+  if (!app.isPackaged) return
+
   session.defaultSession.webRequest.onHeadersReceived((details, respond) => {
     respond({
       responseHeaders: {
