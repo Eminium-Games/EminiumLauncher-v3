@@ -77,9 +77,7 @@ function getProjectRoot(): string {
 
 async function performGitUpdate(mainWindow: BrowserWindow, latestSha: string) {
   const projectRoot = getProjectRoot()
-  const totalSteps = 3
-
-  broadcastProgress(mainWindow, 0, totalSteps)
+  const totalSteps = 2
 
   broadcastProgress(mainWindow, 0, totalSteps)
   logger.log('Pulling latest changes...')
@@ -89,18 +87,13 @@ async function performGitUpdate(mainWindow: BrowserWindow, latestSha: string) {
   logger.log('Installing dependencies...')
   await execAsync('npm install', projectRoot)
 
-  broadcastProgress(mainWindow, 2, totalSteps)
-  logger.log('Building project...')
-  await execAsync('npm run build', projectRoot)
-
   broadcastProgress(mainWindow, totalSteps, totalSteps)
   await writeLastCommit(latestSha)
 
   broadcastStatus(mainWindow, { status: 'updated' })
 
   setTimeout(() => {
-    app.relaunch()
-    app.exit(0)
+    mainWindow.webContents.reload()
   }, 1500)
 }
 
@@ -154,9 +147,8 @@ async function checkForUpdates(mainWindow: BrowserWindow) {
 export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle('updater:checkNow', () => checkForUpdates(mainWindow))
   ipcMain.handle('updater:installNow', () => {
-    if (!app.isPackaged) {
-      app.relaunch()
-      app.exit(0)
+    if (!app.isPackaged && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.reload()
     }
   })
 
