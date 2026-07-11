@@ -8,7 +8,6 @@ const GITHUB_OWNER = 'Eminium-Games'
 const GITHUB_REPO = 'EminiumLauncher-v3'
 const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`
 const LAST_COMMIT_FILE = 'last-commit.txt'
-const AUTO_CHECK_DELAY_MS = 60_000
 const MIN_UPDATE_INTERVAL_MS = 30_000
 
 let lastCheckEpoch = 0
@@ -161,9 +160,9 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     }
   })
 
-  setTimeout(() => {
+  mainWindow.webContents.on('did-finish-load', () => {
     checkForUpdates(mainWindow).catch((error) => {
       logger.error('Auto updater check failed:', error)
     })
-  }, AUTO_CHECK_DELAY_MS)
+  })
 }
