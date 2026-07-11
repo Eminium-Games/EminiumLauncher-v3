@@ -1,4 +1,4 @@
-require('dotenv').config()
+try { require('dotenv').config() } catch {}
 
 const { notarize } = require('@electron/notarize')
 const { spawnSync } = require('node:child_process')

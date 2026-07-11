@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
             build-command: npm run release:lin
@@ -19,6 +19,9 @@ jobs:
           - os: windows-latest
             build-command: npm run release:win
             artifact-name: windows
+          - os: macos-latest
+            build-command: npm run release:mac
+            artifact-name: macos
 
     runs-on: ${{ matrix.os }}
 
@@ -35,6 +38,8 @@ jobs:
       - name: Build
         run: ${{ matrix.build-command }}
         shell: bash
+        env:
+          SKIP_NOTARIZE: 'true'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
