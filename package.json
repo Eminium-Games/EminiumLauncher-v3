@@ -98,7 +98,6 @@
       "darkModeSupport": true,
       "hardenedRuntime": true,
       "gatekeeperAssess": true,
-      "identity": "Developer ID Application: Eminium Games",
       "notarize": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
