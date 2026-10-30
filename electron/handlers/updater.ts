@@ -113,7 +113,7 @@ async function performUpdate(mainWindow: BrowserWindow, projectRoot: string, lat
 
   setTimeout(() => {
     try {
-      app.relaunch()
+      app.relaunch({ execPath: process.execPath, args: process.argv.slice(1) })
       app.quit()
     } catch (err) {
       logger.error('Relaunch failed:', err)
@@ -180,8 +180,10 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
   })
 
   mainWindow.webContents.on('did-finish-load', () => {
-    checkForUpdates().catch((error) => {
-      logger.error('Auto updater check failed:', error)
-    })
+    setTimeout(() => {
+      checkForUpdates().catch((error) => {
+        logger.error('Auto updater check failed:', error)
+      })
+    }, 2500)
   })
 }
