@@ -111,12 +111,6 @@ declare global {
       system: {
         getInfo: () => Promise<ISystemInfo>
       }
-      updater: {
-        checkNow: () => Promise<any>
-        debugSimulate: () => Promise<any>
-        onProgress: (callback: (value: any) => void) => void
-        onStatus: (callback: (value: any) => void) => void
-      }
     }
   }
 }

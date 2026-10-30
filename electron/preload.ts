@@ -134,12 +134,6 @@ const rendererApi = {
     getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info')
   },
 
-  updater: {
-    checkNow: (): Promise<{ updated: boolean }> => ipcRenderer.invoke('updater:checkNow'),
-    installNow: (): Promise<void> => ipcRenderer.invoke('updater:installNow'),
-    onProgress: (callback: ProgressCallback<{ index: number; total: number }>) => bindEvent('updater:progress', callback),
-    onStatus: (callback: ProgressCallback<{ status: string; error?: string }>) => bindEvent('updater:status', callback)
-  }
 }
 
 export type RendererApi = typeof rendererApi

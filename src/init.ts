@@ -30,7 +30,7 @@ export async function bootstrap() {
   const progressBar = document.getElementById('update-progress-bar')
   const progressLabel = document.getElementById('update-progress-label')
   const progressPercent = document.getElementById('update-progress-percent')
-  let updatePopupShown = false
+
 
   const setIndeterminate = (active: boolean) => {
     if (!progressBar || !progressPercent) return
@@ -44,46 +44,7 @@ export async function bootstrap() {
     }
   }
 
-  // Updater events
-  if (window.api?.updater) {
-    window.api.updater.onStatus((s: any) => {
-      if (!s) return
-      if (s.status === 'found') {
-        if (!updatePopupShown) {
-          updatePopupShown = true
-          void Dialog.show(
-            'Une mise a jour du launcher est disponible. Le telechargement commence maintenant.',
-            [{ text: 'OK', type: 'ok' }],
-            'Mise a jour'
-          )
-        }
-
-        setIndeterminate(false)
-        progressBar!.style.width = '0%'
-        progressLabel!.innerText = 'Preparing launcher update...'
-        progressPercent!.innerText = '0%'
-        setBlockingView('update')
-      } else if (s.status === 'updated') {
-        progressLabel!.innerText = 'Update applied, restarting...'
-      } else if (s.status === 'error') {
-        progressLabel!.innerText = 'Update failed. Continuing with current version.'
-        void Dialog.show(
-          'La mise a jour a echoue. Le launcher continue avec la version actuelle.',
-          [{ text: 'OK', type: 'ok' }],
-          'Erreur de mise a jour'
-        )
-        logger.error('Updater error', s.error)
-      }
-    })
-
-    window.api.updater.onProgress((p: any) => {
-      if (!p) return
-      const percent = Math.round((p.index / p.total) * 100)
-      progressPercent!.innerText = `${percent}%`
-      progressBar!.style.width = `${percent}%`
-    })
-  }
-
+  // Launcher updates are handled by the bootstraps system (EML AdminTool)
   const up = await bootstraps.check()
   const bg = await background.get()
   const mn = await maintenance.get()
@@ -109,14 +70,21 @@ export async function bootstrap() {
     })
     bootstraps.error((err) => {
       logger.error('Error while downloading bootstraps:', err)
+      void Dialog.show('Game update failed. Continuing with current version.', [{ text: 'OK', type: 'ok' }], 'Update error')
     })
-    await bootstraps.download()
-    logger.log('Update installed, restarting launcher...')
-    setTimeout(() => {
-      window.location.reload()
-    }, 1000)
-
-    return
+    try {
+      await bootstraps.download()
+      logger.log('Update installed, restarting launcher...')
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+      return
+    } catch (err) {
+      logger.error('Bootstraps download failed:', err)
+      void Dialog.show('Game update failed. Continuing with current version.', [{ text: 'OK', type: 'ok' }], 'Update error')
+      document.querySelector('div#view-update')?.classList.remove('loaded')
+      // Fall through to normal startup
+    }
   }
 
   if (mn) {
