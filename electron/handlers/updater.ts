@@ -13,6 +13,8 @@ const MIN_UPDATE_INTERVAL_MS = 30_000
 
 let lastCheckEpoch = 0
 let updateInProgress = false
+let updateAvailable = false
+let availableVersion: string | null = null
 
 function broadcastStatus(mainWindow: BrowserWindow, status: Record<string, unknown>) {
   if (!mainWindow.isDestroyed()) {
@@ -70,6 +72,8 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     })
 
     autoUpdater.on('update-available', (info) => {
+      updateAvailable = true
+      availableVersion = info?.version ?? null
       logger.log('Update available:', info?.version)
       broadcastStatus(mainWindow, { status: 'found' })
       autoUpdater.downloadUpdate().catch((err) => {
@@ -97,6 +101,8 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     })
 
     autoUpdater.on('update-not-available', () => {
+      updateAvailable = false
+      availableVersion = null
       logger.log('No update available')
       broadcastStatus(mainWindow, { status: 'not-available' })
     })
@@ -114,9 +120,11 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
       }
       lastCheckEpoch = now
       updateInProgress = true
+      updateAvailable = false
+      availableVersion = null
       try {
-        const result = await autoUpdater.checkForUpdates()
-        return { updated: !!result?.updateInfo, version: result?.updateInfo?.version }
+        await autoUpdater.checkForUpdates()
+        return { updated: updateAvailable, version: availableVersion ?? undefined }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         broadcastStatus(mainWindow, { status: 'error', error: message })

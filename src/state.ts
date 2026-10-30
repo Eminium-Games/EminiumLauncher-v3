@@ -33,16 +33,31 @@ async function updateUserInterface() {
 
   const nameEl = document.getElementById('user-name')
   const avatarEl = document.getElementById('user-avatar') as HTMLImageElement
+  const rankBadgeEl = document.querySelector('.rank-badge') as HTMLElement | null
   const nameSettingsEl = document.getElementById('settings-user-name')
   const uuidSettingsEl = document.getElementById('settings-user-uuid')
   const typeSettingsEl = document.getElementById('settings-user-type')
+  const emailSettingsEl = document.getElementById('settings-user-email')
+  const roleSettingsEl = document.getElementById('settings-user-role')
+  const moneySettingsEl = document.getElementById('settings-user-money')
+  const statusSettingsEl = document.getElementById('settings-user-status')
   const avatarSettingsEl = document.getElementById('settings-user-avatar') as HTMLImageElement
 
   if (nameEl) nameEl.innerText = shared.account.name
+  if (rankBadgeEl) rankBadgeEl.innerText = (shared.account.userProperties?.role as string) ?? 'Member'
   if (avatarEl) avatarEl.src = shared.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
   if (nameSettingsEl) nameSettingsEl.innerText = shared.account.name
   if (uuidSettingsEl) uuidSettingsEl.innerText = `UUID: ${shared.account.uuid}`
   if (typeSettingsEl) typeSettingsEl.innerHTML = getAccountIcon(shared.account.meta.type)
+  const props = shared.account.userProperties ?? {}
+  if (emailSettingsEl) emailSettingsEl.innerText = props.email ? `Email: ${props.email}` : ''
+  if (roleSettingsEl) roleSettingsEl.innerText = props.role ? `Role: ${props.role}` : ''
+  if (moneySettingsEl) moneySettingsEl.innerText = typeof props.money === 'number' ? `Money: ${props.money}` : ''
+  if (statusSettingsEl) {
+    const verified = props.emailVerified ? 'Email verified' : 'Email not verified'
+    const banned = props.banned ? `Banned${props.banReason ? ': ' + props.banReason : ''}` : 'Not banned'
+    statusSettingsEl.innerText = `${verified} • ${banned}`
+  }
   if (avatarSettingsEl) avatarSettingsEl.src = shared.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
 
   shared.resetMainView()

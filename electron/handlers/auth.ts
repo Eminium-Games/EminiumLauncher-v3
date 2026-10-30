@@ -26,7 +26,16 @@ function toAccount(data: any): Account {
     uuid: data.uuid ?? data.id?.toString?.() ?? '',
     accessToken: data.access_token,
     clientToken: data.uuid ?? data.id?.toString?.() ?? '',
-    userProperties: {},
+    userProperties: {
+      email: data.email,
+      emailVerified: data.email_verified,
+      money: data.money,
+      role: data.role?.name,
+      roleColor: data.role?.color,
+      banned: data.banned,
+      banReason: data.ban_reason,
+      createdAt: data.created_at
+    },
     meta: {
       online: false,
       type: 'azuriom',
