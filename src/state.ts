@@ -86,7 +86,7 @@ export function closeOverlay(view: ViewName) {
 function getAccountIcon(type: 'msa' | 'yggdrasil' | 'azuriom' | 'crack') {
   switch (type) {
     case 'msa':
-      return '<i class="fa-brands fa-microsoft"></i>Microsoft account'
+      return '<i class="fa-brands fa-globe"></i>Eminium account'
     case 'yggdrasil':
       return '<i class="fa-solid fa-user"></i>Yggdrasil account'
     case 'azuriom':

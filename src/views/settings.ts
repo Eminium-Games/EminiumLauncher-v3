@@ -1,4 +1,4 @@
-import { setView, closeOverlay } from '../state'
+import { setView, closeOverlay, logout } from '../state'
 import { auth, settings, system, skin } from '../ipc'
 import { Dialog } from './dialog'
 import type { IGameSettings } from '../../electron/handlers/settings'
@@ -65,6 +65,7 @@ function initUIListeners() {
       ])
     ) {
       await auth.logout()
+      logout()
       closeOverlay('settings')
       setView('login')
     }
