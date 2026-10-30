@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { autoUpdater } from 'electron-updater'
+import { NsisUpdater, MacUpdater, AppImageUpdater } from 'electron-updater'
 import { exec } from 'child_process'
 import { promises as fs } from 'fs'
 import * as path from 'path'
@@ -7,8 +7,6 @@ import logger from 'electron-log/main'
 
 const GITHUB_OWNER = 'Eminium-Games'
 const GITHUB_REPO = 'EminiumLauncher-v3'
-const GITHUB_API_BASE = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`
-const LAST_COMMIT_FILE = 'last-commit.txt'
 const MIN_UPDATE_INTERVAL_MS = 30_000
 
 let lastCheckEpoch = 0
@@ -61,53 +59,61 @@ async function performGitUpdate(mainWindow: BrowserWindow) {
   }, 1500)
 }
 
+function createLauncherUpdater() {
+  if (process.platform === 'win32') return new NsisUpdater()
+  if (process.platform === 'darwin') return new MacUpdater()
+  return new AppImageUpdater()
+}
+
 export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
   if (app.isPackaged) {
-    autoUpdater.logger = logger
-    autoUpdater.autoDownload = false
-    autoUpdater.autoInstallOnAppQuit = true
+    const updater = createLauncherUpdater()
+    updater.logger = logger
+    updater.autoDownload = false
+    updater.autoInstallOnAppQuit = true
+    updater.setFeedURL({ provider: 'github', owner: GITHUB_OWNER, repo: GITHUB_REPO })
 
-    autoUpdater.on('checking-for-update', () => {
+    updater.on('checking-for-update', () => {
       logger.log('Checking for updates...')
     })
 
-    autoUpdater.on('update-available', (info) => {
+    updater.on('update-available', (info) => {
       updateAvailable = true
       availableVersion = info?.version ?? null
       logger.log('Update available:', info?.version)
       broadcastStatus(mainWindow, { status: 'found' })
-      autoUpdater.downloadUpdate().catch((err) => {
+      updater.downloadUpdate().catch((err) => {
         const message = err instanceof Error ? err.message : String(err)
         logger.error('Update download failed:', message)
         broadcastStatus(mainWindow, { status: 'error', error: message })
       })
     })
 
-    autoUpdater.on('download-progress', (progress) => {
+    updater.on('download-progress', (progress) => {
       const percent = Math.round(progress?.percent ?? 0)
       broadcastProgress(mainWindow, percent, 100)
     })
 
-    autoUpdater.on('update-downloaded', (info) => {
+    updater.on('update-downloaded', (info) => {
       logger.log('Update downloaded:', info?.version)
       broadcastStatus(mainWindow, { status: 'updated' })
       setTimeout(() => {
         try {
-          autoUpdater.quitAndInstall(false, true)
+          updater.quitAndInstall(false, true)
         } catch (err) {
           logger.error('quitAndInstall failed:', err)
         }
       }, 2000)
     })
 
-    autoUpdater.on('update-not-available', () => {
+    updater.on('update-not-available', () => {
       updateAvailable = false
       availableVersion = null
       logger.log('No update available')
       broadcastStatus(mainWindow, { status: 'not-available' })
     })
 
-    autoUpdater.on('error', (err) => {
+    updater.on('error', (err) => {
       const message = err instanceof Error ? err.message : String(err)
       logger.error('Updater error:', message)
       broadcastStatus(mainWindow, { status: 'error', error: message })
@@ -123,7 +129,7 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
       updateAvailable = false
       availableVersion = null
       try {
-        await autoUpdater.checkForUpdates()
+        await updater.checkForUpdates()
         return { updated: updateAvailable, version: availableVersion ?? undefined }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
@@ -136,14 +142,14 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
 
     ipcMain.handle('updater:installNow', () => {
       try {
-        autoUpdater.quitAndInstall(false, true)
+        updater.quitAndInstall(false, true)
       } catch (err) {
         logger.error('installNow failed:', err)
       }
     })
 
     mainWindow.webContents.on('did-finish-load', () => {
-      autoUpdater.checkForUpdates().catch((error) => {
+      updater.checkForUpdates().catch((error) => {
         logger.error('Auto updater check failed:', error)
       })
     })
@@ -172,10 +178,6 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.reload()
       }
-    })
-
-    mainWindow.webContents.on('did-finish-load', () => {
-      // In dev, do not auto-update on load to avoid disrupting development
     })
   }
 }
