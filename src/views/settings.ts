@@ -1,6 +1,7 @@
 import { setView, closeOverlay, logout } from '../state'
 import { auth, settings, system, skin } from '../ipc'
 import { Dialog } from './dialog'
+import logger from 'electron-log/renderer'
 import type { IGameSettings } from '../../electron/handlers/settings'
 import shared from '../shared'
 
@@ -28,7 +29,51 @@ export async function initSettings() {
   initFormValues(sysInfo.resolution)
 
   const versionElem = document.getElementById('version')
-  if (versionElem) versionElem.innerText = `EML Template v${sysInfo.version}`
+  if (versionElem) versionElem.innerText = `Version ${sysInfo.version}`
+
+  const checkUpdatesBtn = document.getElementById('btn-check-updates') as HTMLButtonElement | null
+  const updateStatus = document.getElementById('update-status')
+
+  const setStatus = (text: string) => {
+    if (updateStatus) updateStatus.innerText = text
+  }
+
+  checkUpdatesBtn?.addEventListener('click', async () => {
+    checkUpdatesBtn.disabled = true
+    setStatus('Checking for updates...')
+    try {
+      const result = await window.api.updater.checkNow()
+      if (result?.skipped) {
+        setStatus('Update check skipped (too soon). Try again later.')
+      } else if (result?.updated) {
+        setStatus(`Update ${result.version ?? ''} found. Downloading...`)
+      } else if (result?.error) {
+        setStatus(`Update failed: ${result.error}`)
+      } else {
+        setStatus('You are up to date.')
+      }
+    } catch (err) {
+      setStatus('Update check failed.')
+      logger.error(err)
+    } finally {
+      checkUpdatesBtn.disabled = false
+    }
+  })
+
+  if (window.api?.updater) {
+    window.api.updater.onStatus((s: any) => {
+      if (!s) return
+      if (s.status === 'found') setStatus('Update found. Downloading...')
+      else if (s.status === 'updated') setStatus('Update downloaded. Restarting...')
+      else if (s.status === 'not-available') setStatus('You are up to date.')
+      else if (s.status === 'error') setStatus(`Update error: ${s.error ?? 'unknown'}`)
+    })
+    window.api.updater.onProgress((p: any) => {
+      if (!p) return
+      const percent = Math.round((p.index / p.total) * 100)
+      setStatus(`Downloading update... ${percent}%`)
+    })
+  }
 }
 
 function initUIListeners() {
