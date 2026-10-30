@@ -161,6 +161,7 @@
   "dependencies": {
     "dompurify": "^3.4.2",
     "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.11",
     "eml-lib": "^2.3.5",
     "marked": "^18.0.3",
     "skinview3d": "^3.4.1"
