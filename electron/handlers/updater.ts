@@ -44,6 +44,19 @@ export interface UpdaterProgress {
 
 let pendingUpdate: { latest: string; installerPath?: string } | null = null
 
+const API_TIMEOUT_MS = 20_000
+const DOWNLOAD_STALL_TIMEOUT_MS = 45_000
+
+async function fetchWithTimeout(url: string, ms: number, init?: RequestInit): Promise<Response> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), ms)
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal, cache: 'no-store' })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 // ---------- Helpers ----------
 
 function findProjectRoot(): string | null {
@@ -122,7 +135,7 @@ async function getCurrentSha(projectRoot: string | null): Promise<string> {
 /** Latest commit SHA of main on GitHub. Null when offline / rate-limited. */
 async function getLatestSha(): Promise<string | null> {
   try {
-    const res = await fetch(GH_API_COMMIT, {
+    const res = await fetchWithTimeout(GH_API_COMMIT, API_TIMEOUT_MS, {
       headers: { 'User-Agent': 'Eminium-Games-Launcher', Accept: 'application/vnd.github.v3+json' }
     })
     if (!res.ok) {
@@ -140,7 +153,10 @@ async function getLatestSha(): Promise<string | null> {
 /** SHA the CI embedded in the continuous installer. Null when not published yet. */
 async function getContinuousSha(): Promise<string | null> {
   try {
-    const res = await fetch(`https://github.com/${GH_OWNER}/${GH_REPO}/releases/download/${CONTINUOUS_TAG}/${COMMIT_ASSET}`)
+    const res = await fetchWithTimeout(
+      `https://github.com/${GH_OWNER}/${GH_REPO}/releases/download/${CONTINUOUS_TAG}/${COMMIT_ASSET}`,
+      API_TIMEOUT_MS
+    )
     if (!res.ok) return null
     const sha = (await res.text()).trim()
     return /^[0-9a-f]{40}$/i.test(sha) ? sha : null
@@ -177,6 +193,16 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     if (latest === current) {
       pendingUpdate = null
       return { updateAvailable: false, current, latest, mode }
+    }
+
+    // Anti-loop guard: this commit was already downloaded+installed, but the
+    // running binary still reports an older SHA (e.g. installed elsewhere).
+    // Don't re-download in a loop; tell the UI instead.
+    const applied = await readLastCommit()
+    if (applied === latest) {
+      logger.warn(`Update ${latest.slice(0, 7)} was already installed, but this binary is still ${current.slice(0, 7)}. Skipping re-download.`)
+      pendingUpdate = null
+      return { updateAvailable: false, current, latest, mode, reason: 'install-pending' }
     }
 
     if (mode === 'prod') {
@@ -221,20 +247,34 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     const assetName = getStableAssetName()
     const url = `https://github.com/${GH_OWNER}/${GH_REPO}/releases/download/${CONTINUOUS_TAG}/${assetName}`
     const dest = path.join(app.getPath('temp'), assetName)
+    logger.log(`[updater] downloading ${assetName}...`)
 
-    const res = await fetch(url)
+    const headCtrl = new AbortController()
+    const headTimer = setTimeout(() => headCtrl.abort(), API_TIMEOUT_MS)
+    let res: Response
+    try {
+      res = await fetch(url, { signal: headCtrl.signal, cache: 'no-store' })
+    } finally {
+      clearTimeout(headTimer)
+    }
     if (!res.ok) throw new Error(`Installer download failed: HTTP ${res.status}`)
     const total = Number(res.headers.get('content-length') || 0)
+    logger.log(`[updater] installer size: ${(total / 1024 / 1024).toFixed(1)} MB`)
 
     const file = fs.createWriteStream(dest)
     const reader = res.body!.getReader()
     let transferred = 0
     let lastTime = Date.now()
     let lastTransferred = 0
+    let lastActivity = Date.now()
 
     try {
       while (true) {
+        if (Date.now() - lastActivity > DOWNLOAD_STALL_TIMEOUT_MS) {
+          throw new Error('Download stalled (no data for 45s), check your connection')
+        }
         const { done, value } = await reader.read()
+        lastActivity = Date.now()
         if (done) break
         file.write(Buffer.from(value))
         transferred += value.length
@@ -264,6 +304,7 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     })
 
     if (transferred === 0) throw new Error('Downloaded installer is empty')
+    logger.log(`[updater] downloaded ${(transferred / 1024 / 1024).toFixed(1)} MB -> ${dest}`)
     pendingUpdate = { latest, installerPath: dest }
     if (!mainWindow.isDestroyed()) mainWindow.webContents.send('updater:download_end', { mode })
     return dest

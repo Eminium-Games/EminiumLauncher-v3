@@ -87,6 +87,9 @@ async function applyLauncherUpdate(): Promise<boolean> {
   } catch (err) {
     logger.error('Launcher update failed, continuing with current version:', err)
     hideUpdateView()
+    const { Dialog } = await import('./views/dialog')
+    const message = err instanceof Error ? err.message : String(err)
+    await Dialog.show(`Launcher update failed: ${message}. Continuing with current version.`, [{ text: 'OK', type: 'ok' }], 'Update error')
     return false
   } finally {
     offProgress()

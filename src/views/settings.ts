@@ -52,7 +52,11 @@ export async function initSettings() {
     try {
       const res = await updater.check()
       if (!res.updateAvailable || !res.latest) {
-        setStatus(res.reason === 'offline' ? 'Cannot reach GitHub, you are offline?' : 'You are up to date.')
+        if (res.reason === 'offline') setStatus('Cannot reach GitHub, check your connection.')
+        else if (res.reason === 'build-pending') setStatus('CI has not built this commit yet, try again later.')
+        else if (res.reason === 'install-pending')
+          setStatus('Update already installed, but this copy is still outdated (installed in another folder?).')
+        else setStatus('You are up to date.')
       } else {
         setStatus(`Update ${res.latest.slice(0, 7)} found. Downloading...`)
         const off = updater.onProgress((p) => {
