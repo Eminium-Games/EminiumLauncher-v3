@@ -5,7 +5,7 @@ import * as path from 'node:path'
 import { spawn } from 'node:child_process'
 import logger from 'electron-log/main'
 
-const GH_OWNER = 'Eminium-Games'
+const GH_OWNER = 'EminiumGames'
 const GH_REPO = 'EminiumLauncher-v3'
 const GH_API_COMMIT = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits/main`
 const CONTINUOUS_TAG = 'continuous'
