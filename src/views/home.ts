@@ -16,7 +16,7 @@ marked.use({
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 const parseRssContent = (rawHtml: string) =>
@@ -135,11 +135,11 @@ export function initHome() {
         <article class="news-article">
           <div class="article-meta">
             <div class="author">
+            <span class="date">Publié par</span>
               <img src="https://minotar.net/helm/${encodeURIComponent(author)}/24" alt="Author" />
               <span>${escapeHtml(author)}</span>
             </div>
-            <span class="separator">•</span>
-            <span class="date">${formatDate(item.createdAt)}</span>
+            <span class="date">le ${formatDate(item.createdAt)}</span>
           </div>
 
           <h3>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>` : escapeHtml(item.title)}</h3>
