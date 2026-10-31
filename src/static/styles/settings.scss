@@ -1,6 +1,10 @@
+/* ==========================================================================
+   SETTINGS — modale à onglets
+   ========================================================================== */
+
 #view-settings {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(8, 6, 13, 0.7);
+  backdrop-filter: blur(10px);
   z-index: 999;
   opacity: 0;
   pointer-events: none;
@@ -15,100 +19,83 @@
 .settings-modal {
   position: relative;
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 208px 1fr;
   width: 800px;
   height: 570px;
-  background: rgba(30, 30, 30);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
 
-/* --- SIDEBAR --- */
+/* --- Navigation --- */
 .settings-sidebar {
-  background: rgba(0, 0, 0, 0.2);
-  padding: 30px;
+  background: rgba(0, 0, 0, 0.24);
+  padding: 28px 16px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--line);
 
   h2 {
-    font-size: 18px;
-    margin-bottom: 30px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: white;
+    font-size: var(--fs-2);
+    font-weight: 700;
+    margin-bottom: 22px;
+    padding-left: 14px;
+    color: var(--text-main);
   }
 
   nav {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     flex: 1;
   }
 
-  /* Nav Buttons (Custom variant of .btn) */
   .nav-btn {
     background: transparent;
     border: none;
-    color: #aaa;
+    color: var(--text-muted);
     justify-content: flex-start;
-    padding: 12px 15px;
+    padding: 11px 14px;
+    font-weight: 500;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: white;
+      background: rgba(226, 214, 255, 0.05);
+      color: var(--text-main);
     }
 
+    /* L'onglet actif est marqué par un trait de lave */
     &.active {
-      background: rgba(255, 87, 34, 0.15);
+      background: var(--primary-soft);
       color: var(--primary);
+      box-shadow: inset 2px 0 0 var(--primary);
     }
   }
 }
 
 .btn-close-absolute {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 14px;
+  right: 14px;
   z-index: 10;
-  /* Visual style handled by .btn-icon-only in main.scss */
 }
 
-/* --- CONTENT AREA --- */
+/* --- Contenu --- */
 .settings-content {
-  padding: 30px;
+  padding: 30px 32px;
   overflow-y: auto;
 
   h3 {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    font-size: 20px;
-  }
-
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    margin-bottom: 22px;
+    font-size: var(--fs-2);
+    font-weight: 700;
   }
 }
 
 .tab-content {
   display: none;
-  animation: fadeInSettings 0.3s ease;
+  animation: fadeInSettings 0.25s ease;
 
   &.active {
     display: block;
@@ -118,7 +105,7 @@
 @keyframes fadeInSettings {
   from {
     opacity: 0;
-    transform: translateY(5px);
+    transform: translateY(4px);
   }
 
   to {
@@ -127,15 +114,21 @@
   }
 }
 
-/* --- GAME SETTINGS --- */
+@media (prefers-reduced-motion: reduce) {
+  .tab-content {
+    animation: none;
+  }
+}
+
+/* --- Jeu --- */
 .setting-group {
-  margin-bottom: 25px;
+  margin-bottom: 26px;
 
   label {
     display: block;
     font-weight: 600;
-    margin-bottom: 12px;
-    color: #ddd;
+    margin-bottom: 10px;
+    color: var(--text-main);
 
     i {
       color: var(--primary);
@@ -148,22 +141,28 @@
   select,
   input[type="text"] {
     width: 100%;
-    background: #111;
-    border: 1px solid #444;
-    color: white;
-    padding: 10px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line-strong);
+    color: var(--text-main);
+    padding: 10px 12px;
     border-radius: var(--btn-radius);
-    outline: none;
-    font-family: 'Poppins', sans-serif;
-    transition: border-color 0.2s;
+    font-size: var(--fs-1);
+    transition: border-color 0.15s, box-shadow 0.15s;
 
-    &:focus {
+    &:focus,
+    &:focus-visible {
+      outline: none;
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+
+    option {
+      background: var(--surface);
     }
   }
 }
 
-/* Dual Slider Styles */
+/* Double curseur (RAM) */
 .dual-slider-container {
   position: relative;
   width: 100%;
@@ -177,8 +176,7 @@
   transform: translateY(-50%);
   width: 100%;
   height: 4px;
-  background: #444;
-  border-radius: 2px;
+  background: rgba(226, 214, 255, 0.14);
 }
 
 .slider-fill {
@@ -201,47 +199,55 @@ input[type="range"] {
   z-index: 2;
   margin: 0;
 
+  /* Taille et marge conservées : la position dépend de ces valeurs */
   &::-webkit-slider-thumb {
     pointer-events: all;
     appearance: none;
     width: 16px;
     height: 16px;
-    background: white;
+    background: var(--text-main);
     border: 2px solid var(--primary);
-    border-radius: 50%;
+    border-radius: 2px;
     cursor: pointer;
     margin-top: -6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    transition: box-shadow 0.15s;
+  }
+
+  &:hover::-webkit-slider-thumb,
+  &:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px var(--primary-soft), 0 2px 6px rgba(0, 0, 0, 0.5);
   }
 }
 
 .ram-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  color: #aaa;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
   margin-top: -5px;
 }
 
-/* Java Custom Path */
 .java-selector {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* --- SKIN SETTINGS --- */
+/* --- Skins et capes --- */
 .skin-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, 163.3px);
   gap: 20px;
 
   .skin-preview {
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border: 2px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(226, 214, 255, 0.02);
     cursor: pointer;
     padding-top: 10px;
-    transition: background-color 0.2s;
+    transition: background-color 0.15s, border-color 0.15s;
     position: relative;
 
     img {
@@ -250,42 +256,50 @@ input[type="range"] {
     }
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.05);
+      background-color: rgba(226, 214, 255, 0.06);
+      border-color: var(--line-strong);
     }
 
     &.active {
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
     }
 
     .btn-delete-skin {
       position: absolute;
-      top: -14px;
-      right: -14px;
-      width: 42px;
-      height: 42px;
+      top: -12px;
+      right: -12px;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
       padding: 0;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: #292929;
-      color: #da8a8a;
+      border-radius: var(--radius);
+      border: 1px solid var(--line-strong);
+      background: var(--surface-raised);
+      color: var(--danger);
       font-size: 14px;
+      cursor: pointer;
       display: none;
+      transition: background-color 0.15s, border-color 0.15s;
 
       &:hover {
-        background: #353535;
+        background: #2d2340;
+        border-color: var(--danger);
       }
     }
 
     &:hover .btn-delete-skin {
-      display: block;
+      display: grid;
+      place-items: center;
     }
   }
 
   .cape-preview {
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border: 2px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(226, 214, 255, 0.02);
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.15s, border-color 0.15s;
     position: relative;
     height: 200.5px;
     display: flex;
@@ -298,60 +312,68 @@ input[type="range"] {
     img {
       width: 80px;
       height: 128px;
+      image-rendering: pixelated; /* texture de cape = quelques pixels */
     }
 
     span {
       display: block;
-      font-size: 12px;
-      color: #aaa;
+      font-size: var(--fs-1);
+      color: var(--text-muted);
       font-weight: 500;
     }
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.05);
+      background-color: rgba(226, 214, 255, 0.06);
+      border-color: var(--line-strong);
     }
 
     &.active {
       border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
     }
   }
 }
 
 .add-skin {
   margin-top: 20px;
-  padding: 15px;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  padding: 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
 
   .add-skin-title {
-    font-size: 16px;
-    margin-bottom: 20px;
+    font-size: var(--fs-1);
+    font-weight: 600;
+    margin-bottom: 18px;
   }
 
   .btns-add-skin {
     display: flex;
     justify-content: center;
-    gap: 5px;
-    border: 1px solid rgba(200, 200, 200, 0.1);
-    border-radius: 10px;
-    padding: 5px;
+    gap: 4px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 4px;
 
     .btn-add-skin {
       width: 50%;
       background: transparent;
       border: none;
-      color: white;
+      color: var(--text-muted);
+      font-size: var(--fs-1);
+      font-weight: 500;
       padding: 8px 16px;
       border-radius: var(--btn-radius);
-      transition: background-color 0.2s, border-color 0.2s;
+      transition: background-color 0.15s, color 0.15s;
       cursor: pointer;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(226, 214, 255, 0.06);
+        color: var(--text-main);
       }
 
       &.active {
-        background: rgba(255, 255, 255, 0.15);
+        background: var(--primary-soft);
+        color: var(--primary);
       }
     }
   }
@@ -362,7 +384,7 @@ input[type="range"] {
 
   .btn-choose-file {
     height: 42px;
-    font-weight: 400;
+    font-weight: 500;
   }
 
   .btn-reset {
@@ -370,17 +392,17 @@ input[type="range"] {
     height: 30px;
     width: 30px;
     padding: 0;
-    color: #da8a8a;
+    color: var(--danger);
     font-size: 11px;
   }
 
   label {
     display: block;
-    font-weight: 400;
+    font-weight: 500;
     margin-top: 15px;
     margin-bottom: 8px;
-    color: #ddd;
-    font-size: 14px;
+    color: var(--text-main);
+    font-size: var(--fs-1);
   }
 
   .variant-options {
@@ -392,10 +414,12 @@ input[type="range"] {
       accent-color: var(--primary);
       width: 16px;
       height: 16px;
-      margin: 0 5px 0 0;
+      margin: 0 6px 0 0;
     }
 
     label {
+      display: flex;
+      align-items: center;
       margin-top: 0;
       margin-bottom: 0;
       margin-right: 20px;
@@ -408,12 +432,12 @@ input[type="range"] {
   }
 }
 
-/* --- ACCOUNT SETTINGS --- */
+/* --- Compte --- */
 .account-card {
-  background: rgba(255, 255, 255, 0.03);
-  padding: 20px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(226, 214, 255, 0.03);
+  padding: 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
 }
 
 .account-header {
@@ -423,48 +447,50 @@ input[type="range"] {
   margin-bottom: 20px;
 
   .account-avatar {
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
     width: 80px;
+    border-radius: 3px;
+    border: 2px solid var(--line-strong);
+    image-rendering: pixelated;
   }
 
   .account-details {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 
     .account-name {
-      font-size: 20px;
-      font-weight: bold;
+      font-size: var(--fs-2);
+      font-weight: 700;
     }
 
     .account-uuid {
-      font-size: 12px;
-      color: #777;
-      font-family: monospace;
+      font-size: var(--fs-1);
+      color: var(--text-dim);
+      font-family: var(--font);
     }
 
     .account-type {
-      font-size: 13px;
-      color: #4caf50;
+      font-size: var(--fs-1);
+      color: var(--ok);
       display: flex;
       align-items: center;
-      gap: 5px;
-      margin-top: 5px;
+      gap: 6px;
+      margin-top: 4px;
     }
   }
 }
 
 .account-actions {
   display: flex;
-  gap: 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 12px;
+  border-top: 1px solid var(--line);
   padding-top: 20px;
 }
 
 p#version {
   margin-top: 20px;
-  font-size: 12px;
-  color: #666;
+  font-size: var(--fs-1);
+  color: var(--text-dim);
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }

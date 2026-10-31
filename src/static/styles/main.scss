@@ -1,16 +1,64 @@
+/* ==========================================================================
+   MAIN — base, vues, boutons, progression, scrollbars
+   ========================================================================== */
+
+/* ==========================================================================
+   POLICE MINECRAFT
+   Dépose le fichier de police ici : src/assets/fonts/Minecraft.ttf
+   (adapte le chemin / le nom si besoin). Les local() servent si elle est
+   déjà installée sur la machine.
+   ========================================================================== */
+@font-face {
+  font-family: 'Minecraft';
+  src:
+    local('Minecraft'),
+    local('Minecraft Regular'),
+    local('Minecraft Ten'),
+    url('/src/assets/fonts/Minecraft.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   user-select: none;
+}
+
+/* Focus clavier visible (l'ancien `outline: none` global le supprimait) */
+:focus:not(:focus-visible) {
   outline: none;
 }
 
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font);
+  font-size: var(--fs-1);
+  line-height: 1.5;
+  font-synthesis: none; /* pas de faux gras : la hiérarchie passe par la taille */
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  text-rendering: optimizeSpeed;
+  text-shadow: var(--text-shadow);
   background: var(--bg-dark);
-  background-position: center;
-  background-size: cover;
   color: var(--text-main);
   height: 100vh;
   overflow: hidden;
@@ -19,7 +67,8 @@ body {
 a {
   color: var(--primary);
   text-decoration: none;
-  transition: color 0.2s;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
 
   &:hover {
     color: var(--primary-hover);
@@ -33,24 +82,37 @@ a {
   height: 100%;
 }
 
+/* --- Fond : obsidienne, lueur de lave en bas à gauche, grille de blocs ---
+   ::before = voile + flou (utile si --bg-image est défini)
+   ::after  = lueur + grille, jamais floutées                              */
 .app-background {
   position: absolute;
   inset: 0;
-  // background-image: url('/src/assets/bg.jpg');
-  background-size: cover;
-  background-position: center;
   z-index: -1;
+  background: var(--bg-dark) var(--bg-image, none) center / cover;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 8, 16, 0.55);
+    backdrop-filter: blur(8px);
+  }
 
   &::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
+    pointer-events: none;
+    background-image:
+      radial-gradient(55% 45% at 6% 104%, rgba(255, 87, 34, 0.3), transparent 72%),
+      linear-gradient(rgba(226, 214, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226, 214, 255, 0.02) 1px, transparent 1px);
+    background-size: auto, 32px 32px, 32px 32px;
   }
 }
 
-/* --- Views Management --- */
+/* --- Gestion des vues --- */
 .view {
   position: absolute;
   inset: 0;
@@ -67,7 +129,8 @@ a {
   }
 
   &.overlay {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(8, 6, 13, 0.82);
+    backdrop-filter: blur(6px);
     justify-content: center;
     align-items: center;
     z-index: 100;
@@ -84,97 +147,136 @@ a {
   display: none !important;
 }
 
+/* --- Scrollbars (globales) --- */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
 
-/* --- GLOBAL BUTTON SYSTEM --- */
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(226, 214, 255, 0.14);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(226, 214, 255, 0.28);
+    background-clip: padding-box;
+  }
+}
+
+/* ==========================================================================
+   BOUTONS
+   Biseau façon bloc : reflet en haut, ombre en bas.
+   ========================================================================== */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 10px 20px;
+  padding: 10px 18px;
 
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  line-height: 1.4;
   text-decoration: none;
 
   border-radius: var(--btn-radius);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
-
-  /* Disable selection */
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s,
+    box-shadow 0.15s, transform 0.1s;
   user-select: none;
 
+  &:hover {
+    text-decoration: none; /* évite le soulignement quand .btn est un <a> */
+  }
+
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 }
 
-/* Primary Button (Orange) */
+/* Principal : lave, texte sombre */
+.btn-primary,
+.btn-primary:hover {
+  color: var(--on-primary);
+}
+
 .btn-primary {
   background: var(--primary);
-  color: white;
-  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.28);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.26),
+    0 8px 20px -8px var(--primary-glow);
 
   &:hover:not(:disabled) {
     background: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(255, 87, 34, 0.4);
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 2px 0 rgba(0, 0, 0, 0.2),
+      0 3px 10px -6px var(--primary-glow);
   }
 }
 
-/* Secondary Button (Dark/Glass) */
+/* Secondaire : obsidienne */
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ddd;
+  background: rgba(226, 214, 255, 0.05);
+  border-color: var(--line-strong);
+  color: var(--text-main);
 
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: white;
-    text-decoration: none;
+    background: rgba(226, 214, 255, 0.1);
+    border-color: rgba(226, 214, 255, 0.34);
+    color: var(--text-main);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
   }
 }
 
-/* Danger Button (Red) */
+/* Danger */
 .btn-danger {
-  background: rgba(244, 67, 54, 0.1);
-  border: 1px solid rgba(244, 67, 54, 0.5);
-  color: #ff5252;
+  background: rgba(255, 107, 120, 0.1);
+  border-color: rgba(255, 107, 120, 0.45);
+  color: #ff9aa3;
 
   &:hover:not(:disabled) {
-    background: rgba(244, 67, 54, 0.2);
-    border-color: #f44336;
+    background: rgba(255, 107, 120, 0.2);
+    border-color: var(--danger);
+    color: #ffb4bb;
   }
 }
 
-/* Icon Button (Square/Round for icons only) */
+/* Icône seule : carré, comme un emplacement d'inventaire */
 .btn-icon-only {
+  text-shadow: none;
   width: 36px;
   height: 36px;
   padding: 0;
-  border-radius: 50%;
-  /* Circle */
+  border-radius: var(--radius);
   background: transparent;
-  color: #aaa;
+  color: var(--text-muted);
   border: 1px solid transparent;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    text-decoration: none;
+    background: rgba(226, 214, 255, 0.1);
+    color: var(--text-main);
   }
 }
 
-/* Link Button (Looks like text, behaves like button) */
+/* Bouton texte */
 .btn-text {
   background: transparent;
   padding: 5px 10px;
@@ -182,24 +284,25 @@ a {
 
   &:hover {
     color: var(--primary);
-    background: rgba(255, 87, 34, 0.1);
+    background: var(--primary-soft);
   }
 }
 
-/* Brand Button: Microsoft */
+/* Marque : Microsoft */
 .btn-microsoft {
   background: #2f2f2f;
   color: white;
-  border: 1px solid #444;
+  border: 1px solid #4a4a4a;
   width: 100%;
 
   &:hover {
-    background: #3f3f3f;
-    border-color: #666;
+    background: #3d3d3d;
+    border-color: #6a6a6a;
+    color: white;
   }
 }
 
-/* Brand Button: Eminium */
+/* Marque : Eminium */
 .btn-eminium {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -210,5 +313,61 @@ a {
   &:hover {
     background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
     border-color: #4c51bf;
+    color: white;
+  }
+}
+
+/* ==========================================================================
+   PROGRESSION — segmentée comme la barre d'XP
+   (partagée par la sidebar d'accueil et l'écran de mise à jour)
+   ========================================================================== */
+
+.progress-container {
+  margin-top: 18px;
+  height: 40px;
+
+  &.hidden {
+    display: none;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--fs-1);
+    margin-bottom: 6px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-bar-bg {
+    height: 8px;
+    overflow: hidden;
+    background: repeating-linear-gradient(90deg,
+        rgba(226, 214, 255, 0.09) 0 6px,
+        transparent 6px 8px);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: repeating-linear-gradient(90deg,
+        var(--primary) 0 6px,
+        transparent 6px 8px);
+
+    &.indeterminate {
+      width: 30% !important;
+      animation: indeterminate-shimmer 1.5s infinite cubic-bezier(0.65, 0.05, 0.36, 1);
+      will-change: transform;
+    }
+  }
+}
+
+@keyframes indeterminate-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(350%);
   }
 }
