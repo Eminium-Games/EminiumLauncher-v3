@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
 
 import type { IGameSettings, ISystemInfo } from './handlers/settings'
 import type { IAuthResponse } from './handlers/auth'
+import type { RssNewsItem } from './handlers/news'
 import type { UpdaterCheckResult, UpdaterInfo, UpdaterProgress } from './handlers/updater'
 import type { BootstrapsCheckResult, BootstrapsProgress } from './handlers/bootstraps'
 
@@ -101,7 +102,7 @@ const rendererApi = {
   },
 
   news: {
-    getNews: (): Promise<INews[]> => ipcRenderer.invoke('news:get_news'),
+    getNews: (): Promise<RssNewsItem[]> => ipcRenderer.invoke('news:get_news'),
     getCategories: (): Promise<string[]> => ipcRenderer.invoke('news:get_categories')
   },
 

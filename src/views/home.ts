@@ -19,17 +19,13 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-const parseNews = (rawContent: string) =>
-  DOMPurify.sanitize(marked.parse(rawContent) as string, {
+const parseRssContent = (rawHtml: string) =>
+  DOMPurify.sanitize(rawHtml, {
     ADD_ATTR: ['target']
   })
 
-const backgroundColor = (color: string) => {
-  const r = parseInt(color.slice(1, 3), 16)
-  const g = parseInt(color.slice(3, 5), 16)
-  const b = parseInt(color.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, 0.1)`
-}
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 
 export function initHome() {
   const body = document.body
@@ -132,30 +128,26 @@ export function initHome() {
       return
     }
 
-    feed.forEach((item: any) => {
-      let tagsHTML = ''
-      item.tags.forEach((tag: any) => {
-        tagsHTML += `<span class="tag" style="color: ${tag.color}; background-color: ${backgroundColor(tag.color)}">${tag.name}</span>`
-      })
+    feed.forEach((item) => {
+      const author = item.author?.trim() || 'Eminium'
+      const body = item.content?.trim() || item.description?.trim() || ''
       const articleHTML = `
         <article class="news-article">
           <div class="article-meta">
             <div class="author">
-              <img src="https://minotar.net/helm/${item.author.username}/24" alt="Author" />
-              <span>${item.author.username ?? 'Admin Team'}</span>
+              <img src="https://minotar.net/helm/${encodeURIComponent(author)}/24" alt="Author" />
+              <span>${escapeHtml(author)}</span>
             </div>
             <span class="separator">•</span>
             <span class="date">${formatDate(item.createdAt)}</span>
-            <span class="separator">•</span>
-            <div class="tags-container">${tagsHTML}</div>
           </div>
 
-          <h3>${item.title}</h3>
+          <h3>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>` : escapeHtml(item.title)}</h3>
           
-          ${item.image ? `<img src="${item.image}" alt="News Image" onerror="this.style.display='none'"/>` : ''}
+          ${item.image ? `<img src="${escapeHtml(item.image)}" alt="News Image" onerror="this.style.display='none'"/>` : ''}
 
           <div class="article-content">
-            ${parseNews(item.content)}
+            ${parseRssContent(body)}
           </div>
         </article>
       `

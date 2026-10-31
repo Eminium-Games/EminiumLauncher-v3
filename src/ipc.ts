@@ -1,5 +1,6 @@
 import type { IGameSettings, ISystemInfo } from '../electron/handlers/settings'
 import type { IAuthResponse } from '../electron/handlers/auth'
+import type { RssNewsItem } from '../electron/handlers/news'
 import type { UpdaterCheckResult, UpdaterInfo, UpdaterProgress } from '../electron/handlers/updater'
 import type { BootstrapsCheckResult, BootstrapsProgress } from '../electron/handlers/bootstraps'
 import type {
@@ -9,9 +10,7 @@ import type {
   FilesManagerEvents,
   IBackground,
   IMaintenance,
-  INews,
   IServerStatus,
-  INewsCategory,
   JavaEvents,
   LauncherEvents,
   PatcherEvents,
@@ -48,8 +47,8 @@ declare global {
         getStatus: (ip: string, port?: number) => Promise<IServerStatus | null>
       }
       news: {
-        getNews: () => Promise<INews[]>
-        getCategories: () => Promise<INewsCategory[]>
+        getNews: () => Promise<RssNewsItem[]>
+        getCategories: () => Promise<string[]>
       }
       background: {
         get: () => Promise<IBackground | null>
