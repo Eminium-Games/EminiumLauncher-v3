@@ -9,8 +9,16 @@ const GH_OWNER = 'EminiumGames'
 const GH_REPO = 'EminiumLauncher-v3'
 const GH_API_COMMIT = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits/main`
 const CONTINUOUS_TAG = 'continuous'
-const STABLE_INSTALLER = 'EminiumLauncher-Setup-win.exe'
 const COMMIT_ASSET = 'commit-sha.txt'
+
+/** Stable installer asset per platform, as published by the continuous workflow. */
+function getStableAssetName(): string {
+  if (process.platform === 'win32') return 'EminiumLauncher-Setup-win-x64.exe'
+  if (process.platform === 'darwin') {
+    return process.arch === 'arm64' ? 'EminiumLauncher-mac-arm64.dmg' : 'EminiumLauncher-mac-x64.dmg'
+  }
+  return 'EminiumLauncher-linux-x86_64.AppImage'
+}
 
 export type UpdaterMode = 'dev' | 'prod'
 
@@ -210,8 +218,9 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     if (!built || built !== latest) {
       throw new Error('Installer not built yet for the latest commit, try again later')
     }
-    const url = `https://github.com/${GH_OWNER}/${GH_REPO}/releases/download/${CONTINUOUS_TAG}/${STABLE_INSTALLER}`
-    const dest = path.join(app.getPath('temp'), STABLE_INSTALLER)
+    const assetName = getStableAssetName()
+    const url = `https://github.com/${GH_OWNER}/${GH_REPO}/releases/download/${CONTINUOUS_TAG}/${assetName}`
+    const dest = path.join(app.getPath('temp'), assetName)
 
     const res = await fetch(url)
     if (!res.ok) throw new Error(`Installer download failed: HTTP ${res.status}`)
@@ -278,6 +287,25 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
     const target = installerPath || pendingUpdate?.installerPath
     if (!target || !fs.existsSync(target)) throw new Error(`Installer not found: ${target ?? '(none)'}`)
     if (pendingUpdate?.latest) await writeLastCommit(pendingUpdate.latest)
+
+    if (process.platform === 'darwin') {
+      // A .dmg cannot install itself: open it and let the user drag the app to /Applications.
+      const child = spawn('open', [target], { detached: true, stdio: 'ignore' })
+      child.unref()
+      setTimeout(() => app.quit(), 500)
+      return
+    }
+
+    if (process.platform === 'linux') {
+      // AppImage: make executable, launch it, quit the old one.
+      // The user should then replace their AppImage file with the downloaded one.
+      await fs.promises.chmod(target, 0o755)
+      const child = spawn(target, [], { detached: true, stdio: 'ignore' })
+      child.unref()
+      setTimeout(() => app.quit(), 500)
+      return
+    }
+
     const child = spawn(target, [], { detached: true, stdio: 'ignore' })
     child.unref()
     setTimeout(() => app.quit(), 500)

@@ -1,18 +1,29 @@
 name: Continuous build
 
-# Builds the Windows installer on every push to main and publishes it to the
-# `continuous` release. The launcher (commit-based updater) downloads this
-# installer when its embedded commit SHA differs from the latest main commit.
+# Builds the installers for Windows, macOS and Linux on every push to main
+# and publishes them to the `continuous` release. The launcher (commit-based
+# updater) downloads the asset matching its platform when its embedded commit
+# SHA differs from the latest main commit.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
-  build-win:
-    runs-on: windows-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            platform: win
+          - runner: macos-latest
+            platform: mac
+          - runner: ubuntu-latest
+            platform: lin
+    runs-on: ${{ matrix.runner }}
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,21 +37,70 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      - name: Build Windows installer (no publish)
-        run: npx electron-builder --win --publish never
+      - name: Build installer
+        run: npx electron-builder --${{ matrix.platform }} --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare stable assets
+      - name: Collect stable asset (Windows)
+        if: matrix.platform == 'win'
         shell: pwsh
         run: |
-          $sha = (git rev-parse HEAD).Trim()
-          $sha | Out-File -FilePath release/commit-sha.txt -Encoding utf8 -NoNewline
+          New-Item -ItemType Directory -Force -Path dist-assets | Out-Null
           $installer = Get-ChildItem release/*.exe | Select-Object -First 1
-          if (-not $installer) { throw "No installer found in release/" }
-          Copy-Item $installer.FullName release/EminiumLauncher-Setup-win.exe -Force
-          "SHA=$sha"
-          "INSTALLER=$($installer.Name)"
+          if (-not $installer) { throw "No exe installer found in release/" }
+          Copy-Item $installer.FullName dist-assets/EminiumLauncher-Setup-win-x64.exe -Force
+
+      - name: Collect stable assets (macOS)
+        if: matrix.platform == 'mac'
+        shell: bash
+        run: |
+          mkdir -p dist-assets
+          shopt -s nullglob
+          for f in release/*.dmg; do
+            if [[ "$f" == *"-arm64.dmg" ]]; then
+              cp "$f" dist-assets/EminiumLauncher-mac-arm64.dmg
+            else
+              cp "$f" dist-assets/EminiumLauncher-mac-x64.dmg
+            fi
+          done
+          ls dist-assets
+
+      - name: Collect stable asset (Linux)
+        if: matrix.platform == 'lin'
+        shell: bash
+        run: |
+          mkdir -p dist-assets
+          shopt -s nullglob
+          for f in release/*.AppImage; do
+            cp "$f" dist-assets/EminiumLauncher-linux-x86_64.AppImage
+          done
+          ls dist-assets
+
+      - name: Upload assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: continuous-${{ matrix.platform }}
+          path: dist-assets/
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: continuous-*
+          merge-multiple: true
+          path: assets
+
+      - name: Write commit SHA
+        run: |
+          printf '%s' "${{ github.sha }}" > assets/commit-sha.txt
+          ls -la assets
 
       - name: Publish to continuous release
         uses: softprops/action-gh-release@v2
@@ -49,5 +109,8 @@ jobs:
           name: Continuous build
           prerelease: true
           files: |
-            release/EminiumLauncher-Setup-win.exe
-            release/commit-sha.txt
+            assets/EminiumLauncher-Setup-win-x64.exe
+            assets/EminiumLauncher-mac-x64.dmg
+            assets/EminiumLauncher-mac-arm64.dmg
+            assets/EminiumLauncher-linux-x86_64.AppImage
+            assets/commit-sha.txt
