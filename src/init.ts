@@ -48,12 +48,15 @@ function hideUpdateView() {
   getUpdateView().view?.classList.remove('loaded')
 }
 
-function renderUpdateProgress(p: UpdaterProgress, action: string) {
-  const { bar, label, percent } = getUpdateView()
+// function renderUpdateProgress(p: UpdaterProgress, action: string) {
+function renderUpdateProgress(p: UpdaterProgress) {
+
+  // const { bar, label, percent } = getUpdateView()
+  const { bar, percent } = getUpdateView()
   const pct = Math.round(p.percent)
   if (bar) bar.style.width = `${pct}%`
   if (percent) percent.innerText = `${pct}%`
-  if (label) label.innerText = `${action} ${pct}%`
+  // if (label) label.innerText = `${action} ${pct}%`
 }
 
 /** Check GitHub commits at startup, download + install when behind. Returns true when an update was applied (app will restart). */
@@ -75,7 +78,8 @@ async function applyLauncherUpdate(): Promise<boolean> {
   showUpdateView(check.mode === 'dev' ? 'Updating from git...' : 'Downloading launcher update...')
 
   const offProgress = updater.onProgress((p) => {
-    renderUpdateProgress(p, check.mode === 'dev' ? 'Updating...' : 'Downloading update...')
+    // renderUpdateProgress(p, check.mode === 'dev' ? 'Updating...' : 'Downloading update...')
+    renderUpdateProgress(p)
   })
 
   try {
