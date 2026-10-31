@@ -1,5 +1,5 @@
 import { setView, closeOverlay, logout } from '../state'
-import { auth, settings, system, skin, bootstraps } from '../ipc'
+import { auth, settings, system, skin, updater } from '../ipc'
 import { Dialog } from './dialog'
 import logger from 'electron-log/renderer'
 import type { IGameSettings } from '../../electron/handlers/settings'
@@ -31,6 +31,7 @@ export async function initSettings() {
   const versionElem = document.getElementById('version')
   if (versionElem) versionElem.innerText = `Version ${sysInfo.version}`
 
+  const commitElem = document.getElementById('launcher-commit')
   const checkUpdatesBtn = document.getElementById('btn-check-updates') as HTMLButtonElement | null
   const updateStatus = document.getElementById('update-status')
 
@@ -38,27 +39,35 @@ export async function initSettings() {
     if (updateStatus) updateStatus.innerText = text
   }
 
+  try {
+    const info = await updater.getInfo()
+    if (commitElem) commitElem.innerText = `Commit ${info.current.slice(0, 7)} (${info.mode === 'dev' ? 'dev' : 'prod'})`
+  } catch {
+    if (commitElem) commitElem.innerText = ''
+  }
+
   checkUpdatesBtn?.addEventListener('click', async () => {
     checkUpdatesBtn.disabled = true
     setStatus('Checking for updates...')
     try {
-      const up = await bootstraps.check()
-      if (up?.updateAvailable) {
-        setStatus(`Update ${up.latestVersion ?? ''} found. Downloading...`)
-        bootstraps.downloadProgress((value: any) => {
-          const percent = Math.round(((value?.downloaded?.size ?? 0) / (value?.total?.size ?? 1)) * 100)
-          setStatus(`Downloading update... ${percent}%`)
-        })
-        bootstraps.downloadEnd(async () => {
-          setStatus('Installing update...')
-          await bootstraps.install()
-        })
-        await bootstraps.download()
+      const res = await updater.check()
+      if (!res.updateAvailable || !res.latest) {
+        setStatus(res.reason === 'offline' ? 'Cannot reach GitHub, you are offline?' : 'You are up to date.')
       } else {
-        setStatus('You are up to date.')
+        setStatus(`Update ${res.latest.slice(0, 7)} found. Downloading...`)
+        const off = updater.onProgress((p) => {
+          setStatus(`Downloading update... ${Math.round(p.percent)}%`)
+        })
+        try {
+          const installerPath = await updater.download()
+          setStatus('Installing update, the launcher will restart...')
+          await updater.install(installerPath ?? undefined)
+        } finally {
+          off()
+        }
       }
     } catch (err) {
-      setStatus('Update check failed.')
+      setStatus(`Update failed: ${err instanceof Error ? err.message : String(err)}`)
       logger.error(err)
     } finally {
       checkUpdatesBtn.disabled = false

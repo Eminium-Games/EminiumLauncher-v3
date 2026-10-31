@@ -1,0 +1,53 @@
+name: Continuous build
+
+# Builds the Windows installer on every push to main and publishes it to the
+# `continuous` release. The launcher (commit-based updater) downloads this
+# installer when its embedded commit SHA differs from the latest main commit.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-win:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Build Windows installer (no publish)
+        run: npx electron-builder --win --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare stable assets
+        shell: pwsh
+        run: |
+          $sha = (git rev-parse HEAD).Trim()
+          $sha | Out-File -FilePath release/commit-sha.txt -Encoding utf8 -NoNewline
+          $installer = Get-ChildItem release/*.exe | Select-Object -First 1
+          if (-not $installer) { throw "No installer found in release/" }
+          Copy-Item $installer.FullName release/EminiumLauncher-Setup-win.exe -Force
+          "SHA=$sha"
+          "INSTALLER=$($installer.Name)"
+
+      - name: Publish to continuous release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: continuous
+          name: Continuous build
+          prerelease: true
+          files: |
+            release/EminiumLauncher-Setup-win.exe
+            release/commit-sha.txt

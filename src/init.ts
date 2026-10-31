@@ -1,7 +1,7 @@
 import { setBlockingView, setUser, setView } from './state'
-import { auth, background, bootstraps, maintenance, skin } from './ipc'
+import { auth, background, maintenance, skin, updater } from './ipc'
 import logger from 'electron-log/renderer'
-import { Dialog } from './views/dialog'
+import type { UpdaterProgress } from '../electron/handlers/updater'
 
 const DEFAULT_BACKGROUND = '/src/static/images/bg.png'
 const dateFormatOptions: Intl.DateTimeFormatOptions = {
@@ -21,71 +21,91 @@ function preloadImage(url: string): Promise<void> {
   })
 }
 
+function getUpdateView() {
+  return {
+    view: document.querySelector('div#view-update'),
+    bar: document.getElementById('update-progress-bar'),
+    label: document.getElementById('update-progress-label'),
+    percent: document.getElementById('update-progress-percent')
+  }
+}
+
+function showUpdateView(text: string) {
+  const { bar, label, percent } = getUpdateView()
+  if (bar) {
+    bar.classList.remove('indeterminate')
+    bar.style.width = '0%'
+  }
+  if (label) label.innerText = text
+  if (percent) {
+    percent.style.display = 'block'
+    percent.innerText = '0%'
+  }
+  setBlockingView('update')
+}
+
+function hideUpdateView() {
+  getUpdateView().view?.classList.remove('loaded')
+}
+
+function renderUpdateProgress(p: UpdaterProgress, action: string) {
+  const { bar, label, percent } = getUpdateView()
+  const pct = Math.round(p.percent)
+  if (bar) bar.style.width = `${pct}%`
+  if (percent) percent.innerText = `${pct}%`
+  if (label) label.innerText = `${action} ${pct}%`
+}
+
+/** Check GitHub commits at startup, download + install when behind. Returns true when an update was applied (app will restart). */
+async function applyLauncherUpdate(): Promise<boolean> {
+  let check
+  try {
+    check = await updater.check()
+  } catch (err) {
+    logger.error('Updater check failed (offline?), continuing:', err)
+    return false
+  }
+
+  if (!check.updateAvailable || !check.latest) {
+    logger.log(`Launcher up to date (commit ${check.current.slice(0, 7)}, mode: ${check.mode})`)
+    return false
+  }
+
+  logger.log(`Update found: ${check.current.slice(0, 7)} -> ${check.latest.slice(0, 7)} (mode: ${check.mode})`)
+  showUpdateView(check.mode === 'dev' ? 'Updating from git...' : 'Downloading launcher update...')
+
+  const offProgress = updater.onProgress((p) => {
+    renderUpdateProgress(p, check.mode === 'dev' ? 'Updating...' : 'Downloading update...')
+  })
+
+  try {
+    const installerPath = await updater.download()
+    const { label } = getUpdateView()
+    if (label) label.innerText = 'Installing update, the launcher will restart...'
+    await updater.install(installerPath ?? undefined)
+    return true
+  } catch (err) {
+    logger.error('Launcher update failed, continuing with current version:', err)
+    hideUpdateView()
+    return false
+  } finally {
+    offProgress()
+  }
+}
+
 export async function bootstrap() {
   logger.log('Initializing Launcher...')
 
   const bgElement = document.querySelector('.app-background') as HTMLElement
   const maintenanceDates = document.getElementById('maintenance-dates')!
   const maintenanceReason = document.getElementById('maintenance-reason')!
-  const progressBar = document.getElementById('update-progress-bar')
-  const progressLabel = document.getElementById('update-progress-label')
-  const progressPercent = document.getElementById('update-progress-percent')
 
+  // 1. Launcher self-update (commit-based, checked at every startup).
+  if (await applyLauncherUpdate()) return
 
-  const setIndeterminate = (active: boolean) => {
-    if (!progressBar || !progressPercent) return
-
-    if (active) {
-      progressBar.classList.add('indeterminate')
-      progressPercent.style.display = 'none'
-    } else {
-      progressBar.classList.remove('indeterminate')
-      progressPercent.style.display = 'block'
-    }
-  }
-
-  // Launcher updates are handled by the bootstraps system (EML AdminTool)
-  const up = await bootstraps.check()
-  const bg = await background.get()
-  const mn = await maintenance.get()
+  // 2. Load remote config in parallel.
+  const [bg, mn] = await Promise.all([background.get(), maintenance.get()])
   const bgUrl = bg?.file?.url ?? DEFAULT_BACKGROUND
-
-  if (up.updateAvailable) {
-    setIndeterminate(false)
-    progressBar!.style.width = '0%'
-    progressLabel!.innerText = 'Preparing update...'
-    progressPercent!.innerText = '0%'
-    setBlockingView('update')
-    await new Promise((r) => setTimeout(r, 500))
-    bootstraps.downloadProgress((value) => {
-      progressLabel!.innerText = `Downloading update...`
-      const percent = ((value.downloaded.size / value.total.amount) * 100).toFixed(2)
-      progressPercent!.innerText = `${percent}%`
-      progressBar!.style.width = `${percent}%`
-    })
-    bootstraps.downloadEnd(async () => {
-      setIndeterminate(true)
-      progressLabel!.innerText = `Installing...`
-      await bootstraps.install()
-    })
-    bootstraps.error((err) => {
-      logger.error('Error while downloading bootstraps:', err)
-      void Dialog.show('Game update failed. Continuing with current version.', [{ text: 'OK', type: 'ok' }], 'Update error')
-    })
-    try {
-      await bootstraps.download()
-      logger.log('Update installed, restarting launcher...')
-      setTimeout(() => {
-        window.location.reload()
-      }, 1000)
-      return
-    } catch (err) {
-      logger.error('Bootstraps download failed:', err)
-      void Dialog.show('Game update failed. Continuing with current version.', [{ text: 'OK', type: 'ok' }], 'Update error')
-      document.querySelector('div#view-update')?.classList.remove('loaded')
-      // Fall through to normal startup
-    }
-  }
 
   if (mn) {
     const start = new Date(mn.startTime as Date)
@@ -121,4 +141,3 @@ export async function bootstrap() {
     document.body.classList.add('loaded')
   }
 }
-

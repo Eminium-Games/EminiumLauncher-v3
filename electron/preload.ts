@@ -2,17 +2,15 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
 
 import type { IGameSettings, ISystemInfo } from './handlers/settings'
 import type { IAuthResponse } from './handlers/auth'
+import type { UpdaterCheckResult, UpdaterInfo, UpdaterProgress } from './handlers/updater'
+import type { BootstrapsCheckResult, BootstrapsProgress } from './handlers/bootstraps'
 
 import type {
   Account,
-  BootstrapsEvents,
   CleanerEvents,
   DownloaderEvents,
   FilesManagerEvents,
-  IAvatar,
   IBackground,
-  IBootstraps,
-  ICape,
   IMaintenance,
   INews,
   IServerStatus,
@@ -116,12 +114,13 @@ const rendererApi = {
   },
 
   bootstraps: {
-    check: (): Promise<IBootstraps> => ipcRenderer.invoke('bootstraps:check'),
-    download: (): Promise<void> => ipcRenderer.invoke('bootstraps:download'),
-    install: (): Promise<void> => ipcRenderer.invoke('bootstraps:install'),
-    downloadProgress: (callback: ProgressCallback<DownloaderEvents['download_progress'][0]>) => bindEvent('bootstraps:download_progress', callback),
-    downloadEnd: (callback: ProgressCallback<DownloaderEvents['download_end'][0]>) => bindEvent('bootstraps:download_end', callback),
-    error: (callback: ProgressCallback<BootstrapsEvents['bootstraps_error'][0]>) => bindEvent('bootstraps:error', callback)
+    check: (): Promise<BootstrapsCheckResult> => ipcRenderer.invoke('bootstraps:check'),
+    download: (): Promise<string | null> => ipcRenderer.invoke('bootstraps:download'),
+    install: (installerPath?: string): Promise<void> => ipcRenderer.invoke('bootstraps:install', installerPath),
+    downloadProgress: (callback: ProgressCallback<BootstrapsProgress>) => bindEvent('bootstraps:download_progress', callback),
+    downloadEnd: (callback: ProgressCallback<{ downloaded: { amount: number; size: number } }>) =>
+      bindEvent('bootstraps:download_end', callback),
+    error: (callback: ProgressCallback<{ message: string }>) => bindEvent('bootstraps:error', callback)
   },
 
   settings: {
@@ -134,6 +133,14 @@ const rendererApi = {
     getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info')
   },
 
+  updater: {
+    check: (): Promise<UpdaterCheckResult> => ipcRenderer.invoke('updater:check'),
+    download: (): Promise<string | null> => ipcRenderer.invoke('updater:download'),
+    install: (installerPath?: string): Promise<void> => ipcRenderer.invoke('updater:install', installerPath),
+    getInfo: (): Promise<UpdaterInfo> => ipcRenderer.invoke('updater:get-info'),
+    onProgress: (callback: ProgressCallback<UpdaterProgress>) => bindEvent('updater:progress', callback),
+    onDownloadEnd: (callback: ProgressCallback<{ mode: string }>) => bindEvent('updater:download_end', callback)
+  }
 }
 
 export type RendererApi = typeof rendererApi

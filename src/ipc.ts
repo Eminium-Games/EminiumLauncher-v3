@@ -1,13 +1,13 @@
 import type { IGameSettings, ISystemInfo } from '../electron/handlers/settings'
 import type { IAuthResponse } from '../electron/handlers/auth'
+import type { UpdaterCheckResult, UpdaterInfo, UpdaterProgress } from '../electron/handlers/updater'
+import type { BootstrapsCheckResult, BootstrapsProgress } from '../electron/handlers/bootstraps'
 import type {
   Account,
-  BootstrapsEvents,
   CleanerEvents,
   DownloaderEvents,
   FilesManagerEvents,
   IBackground,
-  IBootstraps,
   IMaintenance,
   INews,
   IServerStatus,
@@ -58,12 +58,20 @@ declare global {
         get: () => Promise<IMaintenance | null>
       }
       bootstraps: {
-        check: () => Promise<IBootstraps>
-        download: () => Promise<string>
-        install: () => Promise<void>
-        downloadProgress: (callback: (value: DownloaderEvents['download_progress'][0]) => void) => void
-        downloadEnd: (callback: (value: DownloaderEvents['download_end'][0]) => void) => void
-        error: (callback: (value: BootstrapsEvents['bootstraps_error'][0]) => void) => void
+        check: () => Promise<BootstrapsCheckResult>
+        download: () => Promise<string | null>
+        install: (installerPath?: string) => Promise<void>
+        downloadProgress: (callback: (value: BootstrapsProgress) => void) => void
+        downloadEnd: (callback: (value: { downloaded: { amount: number; size: number } }) => void) => void
+        error: (callback: (value: { message: string }) => void) => void
+      }
+      updater: {
+        check: () => Promise<UpdaterCheckResult>
+        download: () => Promise<string | null>
+        install: (installerPath?: string) => Promise<void>
+        getInfo: () => Promise<UpdaterInfo>
+        onProgress: (callback: (value: UpdaterProgress) => void) => () => void
+        onDownloadEnd: (callback: (value: { mode: string }) => void) => () => void
       }
       game: {
         launch: (payload: { account: Account; settings: IGameSettings; profileSlug: string }) => Promise<void>
@@ -158,10 +166,20 @@ export const maintenance = {
 export const bootstraps = {
   check: async () => await window.api.bootstraps.check(),
   download: async () => await window.api.bootstraps.download(),
-  install: async () => await window.api.bootstraps.install(),
-  downloadProgress: (callback: (value: DownloaderEvents['download_progress'][0]) => void) => window.api.bootstraps.downloadProgress(callback),
-  downloadEnd: (callback: (value: DownloaderEvents['download_end'][0]) => void) => window.api.bootstraps.downloadEnd(callback),
-  error: (callback: (value: BootstrapsEvents['bootstraps_error'][0]) => void) => window.api.bootstraps.error(callback)
+  install: async (installerPath?: string) => await window.api.bootstraps.install(installerPath),
+  downloadProgress: (callback: (value: BootstrapsProgress) => void) => window.api.bootstraps.downloadProgress(callback),
+  downloadEnd: (callback: (value: { downloaded: { amount: number; size: number } }) => void) =>
+    window.api.bootstraps.downloadEnd(callback),
+  error: (callback: (value: { message: string }) => void) => window.api.bootstraps.error(callback)
+}
+
+export const updater = {
+  check: async () => await window.api.updater.check(),
+  download: async () => await window.api.updater.download(),
+  install: async (installerPath?: string) => await window.api.updater.install(installerPath),
+  getInfo: async () => await window.api.updater.getInfo(),
+  onProgress: (callback: (value: UpdaterProgress) => void) => window.api.updater.onProgress(callback),
+  onDownloadEnd: (callback: (value: { mode: string }) => void) => window.api.updater.onDownloadEnd(callback)
 }
 
 export const game = {

@@ -12,6 +12,7 @@ import { registerProfilesHandlers } from './handlers/profiles'
 import { registerServerHandlers } from './handlers/server'
 import { registerSettingsHandlers } from './handlers/settings'
 import { registerSkinHandlers } from './handlers/skin'
+import { registerUpdaterHandlers } from './handlers/updater'
 
 
 import logger from 'electron-log/main'
@@ -213,8 +214,8 @@ function wireIpcHandlers() {
   registerBackgroundHandlers()
   registerMaintenanceHandlers()
   registerBootstrapHandlers(mainWindow)
+  registerUpdaterHandlers(mainWindow)
   registerLauncherHandlers(mainWindow)
-  // Launcher updates are handled by the bootstraps system (EML AdminTool)
   registerSettingsHandlers()
 }
 
