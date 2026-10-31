@@ -15,7 +15,7 @@ async function submitForNotarization(context) {
     return
   }
 
-  if (!APPLE_ID || !APPLE_APP_SPECIIC_P || !APPLE_TEAM_P) {
+  if (!APPLE_ID || !APPLE_APP_SPECIIC_P || !APPLE_TEAM_ID) {
     throw new Error('Missing APPLE_ID / APPLE_APP_SPECIIC_PASSWORD / APPLE_TEAM_ID')
   }
 

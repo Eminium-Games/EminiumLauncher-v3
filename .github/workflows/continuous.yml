@@ -17,10 +17,13 @@ jobs:
         include:
           - runner: windows-latest
             platform: win
+            builder-args: --win
           - runner: macos-latest
             platform: mac
+            builder-args: --mac
           - runner: ubuntu-latest
             platform: lin
+            builder-args: --linux
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
@@ -38,9 +41,11 @@ jobs:
       - run: npm run build
 
       - name: Build installer
-        run: npx electron-builder --${{ matrix.platform }} --publish never
+        run: npx electron-builder ${{ matrix.builder-args }} --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SKIP_NOTARIZE: 'true'
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: Collect stable asset (Windows)
         if: matrix.platform == 'win'
