@@ -45,7 +45,14 @@ async function updateUserInterface() {
 
   if (nameEl) nameEl.innerText = shared.account.name
   if (rankBadgeEl) rankBadgeEl.innerText = (shared.account.userProperties?.role as string) ?? 'Member'
-  if (avatarEl) avatarEl.src = shared.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
+  const headUrl = shared.avatar?.url ?? `https://minotar.net/helm/${encodeURIComponent(shared.account.name)}/256.png`
+  if (avatarEl) {
+    avatarEl.onerror = () => {
+      avatarEl.onerror = null
+      avatarEl.src = 'https://minotar.net/helm/steve/256.png'
+    }
+    avatarEl.src = headUrl
+  }
   if (nameSettingsEl) nameSettingsEl.innerText = shared.account.name
   if (uuidSettingsEl) uuidSettingsEl.innerText = `UUID: ${shared.account.uuid}`
   if (typeSettingsEl) typeSettingsEl.innerHTML = getAccountIcon(shared.account.meta.type)
@@ -58,7 +65,13 @@ async function updateUserInterface() {
     const banned = props.banned ? `Banned${props.banReason ? ': ' + props.banReason : ''}` : 'Not banned'
     statusSettingsEl.innerText = `${verified} • ${banned}`
   }
-  if (avatarSettingsEl) avatarSettingsEl.src = shared.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
+  if (avatarSettingsEl) {
+    avatarSettingsEl.onerror = () => {
+      avatarSettingsEl.onerror = null
+      avatarSettingsEl.src = 'https://minotar.net/helm/steve/256.png'
+    }
+    avatarSettingsEl.src = headUrl
+  }
 
   shared.resetMainView()
   shared.resetSkinViews()
