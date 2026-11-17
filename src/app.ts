@@ -10,11 +10,13 @@ import './static/styles/dialog.scss'
 
 import { initLogin } from './views/login'
 import { initHome } from './views/home'
+import { initMaintenanceLogin } from './views/maintenance-login'
 import { initSettings } from './views/settings'
 import { bootstrap } from './init'
 
 initLogin()
 initHome()
+initMaintenanceLogin()
 initSettings()
 
 bootstrap()

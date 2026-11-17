@@ -1,5 +1,6 @@
 import { setBlockingView, setUser, setView } from './state'
 import { auth, background, maintenance, skin, updater } from './ipc'
+import { showMaintenanceProfile } from './views/maintenance-login'
 import logger from 'electron-log/renderer'
 import type { UpdaterProgress } from '../electron/handlers/updater'
 
@@ -132,6 +133,9 @@ export async function bootstrap() {
     const end = new Date(mn.endTime as Date)
     maintenanceDates.innerText = `From ${start.toLocaleString([], dateFormatOptions)} to ${end.toLocaleString([], dateFormatOptions)}`
     maintenanceReason.innerText = mn.message ?? 'Please come back later.'
+    // A logged-in (but not whitelisted) player sees their profile capsule,
+    // with a logout option to retry with another account.
+    if (session && session.success) showMaintenanceProfile(session.account)
     setBlockingView('maintenance')
     return
   }

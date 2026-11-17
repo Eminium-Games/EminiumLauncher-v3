@@ -3,6 +3,55 @@
    (la base de .maintenance-card est identique dans update.scss)
    ========================================================================== */
 
+div.maintenance {
+  position: relative;
+}
+
+div.maintenance-top-right {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+}
+
+.maintenance-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 6px;
+  background: rgba(226, 214, 255, 0.05);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: rgba(226, 214, 255, 0.1);
+    border-color: rgba(226, 214, 255, 0.34);
+  }
+
+  img {
+    width: 32px;
+    height: 32px;
+    border-radius: 3px;
+    image-rendering: pixelated; /* une tête de joueur, c'est 8×8 pixels */
+    border: 1px solid var(--line-strong);
+  }
+
+  span {
+    font-weight: 700;
+    font-size: var(--fs-1);
+    max-width: 24ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  i {
+    color: var(--text-muted);
+    font-size: var(--fs-1);
+  }
+}
 div.maintenance-card {
   display: flex;
   flex-direction: column;
