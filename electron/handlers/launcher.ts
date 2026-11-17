@@ -4,6 +4,8 @@ import type { Account, IProfile } from 'eml-lib'
 import type { IGameSettings } from './settings'
 import logger from 'electron-log/main'
 import { ADMINTOOL_URL, AUTO_START_MINECRAFT } from '../const'
+import { attachStatsProvider } from './stats'
+import { maybeSendCrashReport } from './crash-reports'
 
 export function registerLauncherHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle('game:launch', (_event, payload: { account: Account; settings: IGameSettings; profileSlug: string }) => {
@@ -139,6 +141,15 @@ export function registerLauncherHandlers(mainWindow: BrowserWindow) {
       logger.log(`Closed with code ${code}.`)
       mainWindow.webContents.send('game:launch_close', code)
     })
+
+    launcher.on('launch_crash', async (crashData) => {
+      logger.error(`Game crashed with code ${crashData.code}.`)
+      mainWindow.webContents.send('game:launch_crash', { code: crashData.code, date: crashData.date })
+      const sent = await maybeSendCrashReport(launcher, crashData)
+      mainWindow.webContents.send('game:crash_report_result', { sent })
+    })
+
+    attachStatsProvider(launcher)
 
     launcher.on('launch_debug', (message) => {
       mainWindow.webContents.send('game:launch_debug', message)

@@ -223,6 +223,7 @@
               <button class="btn nav-btn active" data-tab="game"><i class="fa-solid fa-gamepad"></i><span>Game</span></button>
               <!-- <button class="btn nav-btn" data-tab="skin"><i class="fa-solid fa-images"></i><span>Skin</span></button> -->
               <button class="btn nav-btn" data-tab="account"><i class="fa-solid fa-gears"></i><span>Account</span></button>
+              <button class="btn nav-btn" data-tab="privacy"><i class="fa-solid fa-shield-halved"></i><span>Privacy</span></button>
             </nav>
             <p id="version"></p>
           </aside>
@@ -355,6 +356,32 @@
                   <button id="btn-check-updates" class="btn btn-secondary"><i class="fa-fw fa-solid fa-download"></i><span>Check for updates</span></button>
                   <p id="update-status" style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8;"></p>
                 </div>
+              </div>
+            </section>
+
+            <section id="tab-privacy" class="tab-content">
+              <h3>Privacy</h3>
+
+              <div class="setting-group">
+                <label class="privacy-option">
+                  <input type="checkbox" id="telemetry-stats" />
+                  <span>Anonymous usage statistics</span>
+                </label>
+                <p class="privacy-hint">
+                  Sends anonymized stats (launches, OS, RAM...) to Eminium AdminTool to improve the launcher.
+                  GDPR compliant, no personal data. Takes effect after restart.
+                </p>
+              </div>
+
+              <div class="setting-group">
+                <label class="privacy-option">
+                  <input type="checkbox" id="telemetry-crash" />
+                  <span>Anonymous crash reports</span>
+                </label>
+                <p class="privacy-hint">
+                  Sends anonymized crash logs to Eminium AdminTool when the game crashes to help fix issues.
+                  Usernames and tokens are automatically hidden. Only sent with your consent.
+                </p>
               </div>
             </section>
           </main>

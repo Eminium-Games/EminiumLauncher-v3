@@ -7,7 +7,7 @@ import type {
   Account,
   CleanerEvents,
   DownloaderEvents,
-  FilesManagerEvents,
+  FileManagerEvents,
   IBackground,
   IMaintenance,
   IServerStatus,
@@ -54,7 +54,7 @@ declare global {
         get: () => Promise<IBackground | null>
       }
       maintenance: {
-        get: () => Promise<IMaintenance | null>
+        get: (account?: Account) => Promise<IMaintenance | null>
       }
       bootstraps: {
         check: () => Promise<BootstrapsCheckResult>
@@ -85,11 +85,11 @@ declare global {
         launchInstallLoader: (callback: (value: LauncherEvents['launch_install_loader'][0]) => void) => void
 
         launchExtractNatives: (callback: () => void) => void
-        extractProgress: (callback: (value: FilesManagerEvents['extract_progress'][0]) => void) => void
-        extractEnd: (callback: (value: FilesManagerEvents['extract_end'][0]) => void) => void
+        extractProgress: (callback: (value: FileManagerEvents['extract_progress'][0]) => void) => void
+        extractEnd: (callback: (value: FileManagerEvents['extract_end'][0]) => void) => void
         launchCopyAssets: (callback: () => void) => void
-        copyProgress: (callback: (value: FilesManagerEvents['copy_progress'][0]) => void) => void
-        copyEnd: (callback: (value: FilesManagerEvents['copy_end'][0]) => void) => void
+        copyProgress: (callback: (value: FileManagerEvents['copy_progress'][0]) => void) => void
+        copyEnd: (callback: (value: FileManagerEvents['copy_end'][0]) => void) => void
 
         launchPatchLoader: (callback: () => void) => void
         patchProgress: (callback: (value: PatcherEvents['patch_progress'][0]) => void) => void
@@ -107,8 +107,14 @@ declare global {
 
         launchData: (callback: (value: LauncherEvents['launch_data'][0]) => void) => void
         launchClose: (callback: (value: any) => void) => void
+        launchCrash: (callback: (value: { code: number; date: string }) => void) => void
+        crashReportResult: (callback: (value: { sent: boolean }) => void) => void
         launchDebug: (callback: (value: LauncherEvents['launch_debug'][0]) => void) => void
         patchDebug: (callback: (value: PatcherEvents['patch_debug'][0]) => void) => void
+      }
+      crash: {
+        sendPending: () => Promise<{ success: boolean; error?: string }>
+        discardPending: () => Promise<{ success: boolean }>
       }
       settings: {
         get: () => Promise<IGameSettings>
@@ -159,7 +165,7 @@ export const background = {
 }
 
 export const maintenance = {
-  get: async () => await window.api.maintenance.get()
+  get: async (account?: Account) => await window.api.maintenance.get(account)
 }
 
 export const bootstraps = {
@@ -190,11 +196,11 @@ export const game = {
   downloadEnd: (callback: (value: DownloaderEvents['download_end'][0]) => void) => window.api.game.downloadEnd(callback),
   launchInstallLoader: (callback: (value: LauncherEvents['launch_install_loader'][0]) => void) => window.api.game.launchInstallLoader(callback),
   launchExtractNatives: (callback: () => void) => window.api.game.launchExtractNatives(callback),
-  extractProgress: (callback: (value: FilesManagerEvents['extract_progress'][0]) => void) => window.api.game.extractProgress(callback),
-  extractEnd: (callback: (value: FilesManagerEvents['extract_end'][0]) => void) => window.api.game.extractEnd(callback),
+  extractProgress: (callback: (value: FileManagerEvents['extract_progress'][0]) => void) => window.api.game.extractProgress(callback),
+  extractEnd: (callback: (value: FileManagerEvents['extract_end'][0]) => void) => window.api.game.extractEnd(callback),
   launchCopyAssets: (callback: () => void) => window.api.game.launchCopyAssets(callback),
-  copyProgress: (callback: (value: FilesManagerEvents['copy_progress'][0]) => void) => window.api.game.copyProgress(callback),
-  copyEnd: (callback: (value: FilesManagerEvents['copy_end'][0]) => void) => window.api.game.copyEnd(callback),
+  copyProgress: (callback: (value: FileManagerEvents['copy_progress'][0]) => void) => window.api.game.copyProgress(callback),
+  copyEnd: (callback: (value: FileManagerEvents['copy_end'][0]) => void) => window.api.game.copyEnd(callback),
   launchPatchLoader: (callback: () => void) => window.api.game.launchPatchLoader(callback),
   patchProgress: (callback: (value: PatcherEvents['patch_progress'][0]) => void) => window.api.game.patchProgress(callback),
   patchError: (callback: (value: PatcherEvents['patch_error'][0]) => void) => window.api.game.patchError(callback),
@@ -208,6 +214,8 @@ export const game = {
   launched: (callback: () => void) => window.api.game.launched(callback),
   launchData: (callback: (value: LauncherEvents['launch_data'][0]) => void) => window.api.game.launchData(callback),
   launchClose: (callback: (value: any) => void) => window.api.game.launchClose(callback),
+  launchCrash: (callback: (value: { code: number; date: string }) => void) => window.api.game.launchCrash(callback),
+  crashReportResult: (callback: (value: { sent: boolean }) => void) => window.api.game.crashReportResult(callback),
   launchDebug: (callback: (value: LauncherEvents['launch_debug'][0]) => void) => window.api.game.launchDebug(callback),
   patchDebug: (callback: (value: PatcherEvents['patch_debug'][0]) => void) => window.api.game.patchDebug(callback)
 }
@@ -220,5 +228,10 @@ export const settings = {
 
 export const system = {
   getInfo: () => window.api.system.getInfo()
+}
+
+export const crash = {
+  sendPending: () => window.api.crash.sendPending(),
+  discardPending: () => window.api.crash.discardPending()
 }
 

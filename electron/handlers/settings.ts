@@ -15,6 +15,11 @@ export interface ISystemInfo {
   version: string
 }
 
+export interface ITelemetrySettings {
+  statsEnabled: boolean
+  crashReportsEnabled: boolean
+}
+
 export interface IGameSettings {
   java: string
   memory: {
@@ -27,6 +32,7 @@ export interface IGameSettings {
     fullscreen: boolean
   }
   launcherAction: 'close' | 'keep' | 'hide'
+  telemetry: ITelemetrySettings
 }
 
 export const DEFAULT_SETTINGS: IGameSettings = {
@@ -40,22 +46,44 @@ export const DEFAULT_SETTINGS: IGameSettings = {
     height: 720,
     fullscreen: false
   },
-  launcherAction: 'close'
+  launcherAction: 'close',
+  telemetry: {
+    statsEnabled: true,
+    crashReportsEnabled: false
+  }
+}
+
+export function readSettings(): IGameSettings {
+  try {
+    if (!fs.existsSync(settingsPath)) {
+      return structuredClone(DEFAULT_SETTINGS)
+    }
+    const data = fs.readFileSync(settingsPath, 'utf-8')
+    const parsed = JSON.parse(data)
+    return {
+      ...structuredClone(DEFAULT_SETTINGS),
+      ...parsed,
+      memory: { ...DEFAULT_SETTINGS.memory, ...parsed.memory },
+      resolution: { ...DEFAULT_SETTINGS.resolution, ...parsed.resolution },
+      telemetry: { ...DEFAULT_SETTINGS.telemetry, ...parsed.telemetry }
+    }
+  } catch (err) {
+    logger.error('Error reading settings:', err)
+    return structuredClone(DEFAULT_SETTINGS)
+  }
 }
 
 export function registerSettingsHandlers() {
   ipcMain.handle('settings:get', async () => {
+    const settings = readSettings()
     try {
       if (!fs.existsSync(settingsPath)) {
-        fs.writeFileSync(settingsPath, JSON.stringify(DEFAULT_SETTINGS, null, 2))
-        return DEFAULT_SETTINGS
+        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2))
       }
-      const data = fs.readFileSync(settingsPath, 'utf-8')
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(data) }
     } catch (err) {
-      logger.error('Error reading settings:', err)
-      return DEFAULT_SETTINGS
+      logger.error('Error writing settings:', err)
     }
+    return settings
   })
 
   ipcMain.handle('settings:set', async (_event, newSettings: IGameSettings) => {

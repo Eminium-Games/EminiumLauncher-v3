@@ -263,7 +263,12 @@ function initFormValues(resolution: { width: number; height: number }) {
       : `${currentSettings.resolution.width}x${currentSettings.resolution.height}`
   }
   if (launcherActionSelect) launcherActionSelect.value = currentSettings.launcherAction
-  if (javaSelect) javaSelect.value = currentSettings.java === 'bundled' ? 'bundled' : 'custom'
+  if (javaSelect) javaSelect.value = currentSettings.java === 'bundled' ? 'bundled' : 'system'
+
+  const statsCheckbox = document.getElementById('telemetry-stats') as HTMLInputElement | null
+  const crashCheckbox = document.getElementById('telemetry-crash') as HTMLInputElement | null
+  if (statsCheckbox) statsCheckbox.checked = currentSettings.telemetry?.statsEnabled ?? true
+  if (crashCheckbox) crashCheckbox.checked = currentSettings.telemetry?.crashReportsEnabled ?? false
 
   minInput.dispatchEvent(new Event('input'))
 }
@@ -274,6 +279,8 @@ async function saveSettings() {
   const launcherActionSelect = document.getElementById('launcher-action-select') as HTMLSelectElement
   const resolutionSelect = document.getElementById('resolution-select') as HTMLSelectElement
   const javaSelect = document.getElementById('java-select') as HTMLSelectElement
+  const statsCheckbox = document.getElementById('telemetry-stats') as HTMLInputElement | null
+  const crashCheckbox = document.getElementById('telemetry-crash') as HTMLInputElement | null
 
   const newSettings: IGameSettings = {
     ...currentSettings,
@@ -287,7 +294,11 @@ async function saveSettings() {
       fullscreen: resolutionSelect.value === 'fullscreen'
     },
     java: javaSelect.value === 'bundled' ? 'bundled' : 'path',
-    launcherAction: launcherActionSelect.value as 'close' | 'keep' | 'hide'
+    launcherAction: launcherActionSelect.value as 'close' | 'keep' | 'hide',
+    telemetry: {
+      statsEnabled: statsCheckbox?.checked ?? currentSettings.telemetry?.statsEnabled ?? true,
+      crashReportsEnabled: crashCheckbox?.checked ?? currentSettings.telemetry?.crashReportsEnabled ?? false
+    }
   }
 
   await settings.set(newSettings)

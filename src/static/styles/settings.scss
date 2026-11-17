@@ -432,6 +432,30 @@ input[type="range"] {
   }
 }
 
+/* --- Confidentialité --- */
+.privacy-option {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+}
+
+.privacy-hint {
+  margin: 4px 0 0 30px;
+  font-size: var(--fs-1);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 /* --- Compte --- */
 .account-card {
   background: rgba(226, 214, 255, 0.03);

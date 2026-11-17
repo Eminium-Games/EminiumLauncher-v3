@@ -5,6 +5,7 @@ import path from 'node:path'
 import { registerAuthHandlers } from './handlers/auth'
 import { registerBackgroundHandlers } from './handlers/background'
 import { registerBootstrapHandlers } from './handlers/bootstraps'
+import { registerCrashReportHandlers } from './handlers/crash-reports'
 import { registerLauncherHandlers } from './handlers/launcher'
 import { registerMaintenanceHandlers } from './handlers/maintenance'
 import { registerNewsHandlers } from './handlers/news'
@@ -12,6 +13,7 @@ import { registerProfilesHandlers } from './handlers/profiles'
 import { registerServerHandlers } from './handlers/server'
 import { registerSettingsHandlers } from './handlers/settings'
 import { registerSkinHandlers } from './handlers/skin'
+import { initStats } from './handlers/stats'
 import { registerUpdaterHandlers } from './handlers/updater'
 
 
@@ -217,10 +219,13 @@ function wireIpcHandlers() {
   registerUpdaterHandlers(mainWindow)
   registerLauncherHandlers(mainWindow)
   registerSettingsHandlers()
+  registerCrashReportHandlers()
 }
 
 function bootstrapApplication() {
   logger.initialize()
+  // Fire-and-forget: sends the STARTUP stat as early as possible without delaying the window.
+  void initStats()
   enforceContentSecurityPolicy()
   configureAppMenu()
   forgeSecureWindow()

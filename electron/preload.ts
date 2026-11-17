@@ -10,7 +10,7 @@ import type {
   Account,
   CleanerEvents,
   DownloaderEvents,
-  FilesManagerEvents,
+  FileManagerEvents,
   IBackground,
   IMaintenance,
   INews,
@@ -64,11 +64,11 @@ const rendererApi = {
     launchInstallLoader: (callback: ProgressCallback<LauncherEvents['launch_install_loader'][0]>) =>
       bindEvent('game:launch_install_loader', callback),
     launchExtractNatives: (callback: VoidCallback) => bindVoidEvent('game:launch_extract_natives', callback),
-    extractProgress: (callback: ProgressCallback<FilesManagerEvents['extract_progress'][0]>) => bindEvent('game:extract_progress', callback),
-    extractEnd: (callback: ProgressCallback<FilesManagerEvents['extract_end'][0]>) => bindEvent('game:extract_end', callback),
+    extractProgress: (callback: ProgressCallback<FileManagerEvents['extract_progress'][0]>) => bindEvent('game:extract_progress', callback),
+    extractEnd: (callback: ProgressCallback<FileManagerEvents['extract_end'][0]>) => bindEvent('game:extract_end', callback),
     launchCopyAssets: (callback: VoidCallback) => bindVoidEvent('game:launch_copy_assets', callback),
-    copyProgress: (callback: ProgressCallback<FilesManagerEvents['copy_progress'][0]>) => bindEvent('game:copy_progress', callback),
-    copyEnd: (callback: ProgressCallback<FilesManagerEvents['copy_end'][0]>) => bindEvent('game:copy_end', callback),
+    copyProgress: (callback: ProgressCallback<FileManagerEvents['copy_progress'][0]>) => bindEvent('game:copy_progress', callback),
+    copyEnd: (callback: ProgressCallback<FileManagerEvents['copy_end'][0]>) => bindEvent('game:copy_end', callback),
     launchPatchLoader: (callback: VoidCallback) => bindVoidEvent('game:launch_patch_loader', callback),
     patchProgress: (callback: ProgressCallback<PatcherEvents['patch_progress'][0]>) => bindEvent('game:patch_progress', callback),
     patchError: (callback: ProgressCallback<PatcherEvents['patch_error'][0]>) => bindEvent('game:patch_error', callback),
@@ -82,6 +82,8 @@ const rendererApi = {
     launched: (callback: VoidCallback) => bindVoidEvent('game:launched', callback),
     launchData: (callback: ProgressCallback<LauncherEvents['launch_data'][0]>) => bindEvent('game:launch_data', callback),
     launchClose: (callback: ProgressCallback<unknown>) => bindEvent('game:launch_close', callback),
+    launchCrash: (callback: ProgressCallback<{ code: number; date: string }>) => bindEvent('game:launch_crash', callback),
+    crashReportResult: (callback: ProgressCallback<{ sent: boolean }>) => bindEvent('game:crash_report_result', callback),
     launchDebug: (callback: ProgressCallback<LauncherEvents['launch_debug'][0]>) => bindEvent('game:launch_debug', callback),
     patchDebug: (callback: ProgressCallback<PatcherEvents['patch_debug'][0]>) => bindEvent('game:patch_debug', callback)
   },
@@ -111,7 +113,7 @@ const rendererApi = {
   },
 
   maintenance: {
-    get: (): Promise<IMaintenance | null> => ipcRenderer.invoke('maintenance:get')
+    get: (account?: Account): Promise<IMaintenance | null> => ipcRenderer.invoke('maintenance:get', account)
   },
 
   bootstraps: {
@@ -132,6 +134,11 @@ const rendererApi = {
 
   system: {
     getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info')
+  },
+
+  crash: {
+    sendPending: (): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('crash:send-pending'),
+    discardPending: (): Promise<{ success: boolean }> => ipcRenderer.invoke('crash:discard-pending')
   },
 
   updater: {

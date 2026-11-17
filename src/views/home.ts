@@ -1,5 +1,6 @@
 import { setView, getUser } from '../state'
-import { game, news, server, settings, profiles } from '../ipc'
+import { crash, game, news, server, settings, profiles } from '../ipc'
+import { Dialog } from './dialog'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import logger from 'electron-log/renderer'
@@ -272,5 +273,38 @@ Ready to launch the game with the following settings:
       if (progressBar) progressBar.style.width = '0%'
       if (progressPercent) progressPercent.innerText = ''
     }, 10000)
+  })
+  game.launchCrash(() => {
+    setIndeterminate(false)
+    if (playBtn) playBtn.style.display = 'block'
+    if (progressContainer) progressContainer.classList.add('hidden')
+    if (progressLabel) progressLabel.innerText = ''
+    if (progressPercent) progressPercent.innerText = ''
+  })
+  game.crashReportResult(async ({ sent }) => {
+    if (sent) {
+      await Dialog.show('The game crashed. An anonymous crash report was sent to help fix the issue.', [{ text: 'OK', type: 'ok' }], 'Game crashed')
+      return
+    }
+    const choice = await Dialog.show<string>(
+      'The game crashed. Send an anonymous crash report to help fix the issue? Usernames and tokens are automatically hidden.',
+      [
+        { text: "Don't send", type: 'cancel' },
+        { text: 'Always send', type: 'other', action: async () => 'always' },
+        { text: 'Send once', type: 'ok', action: async () => 'once' }
+      ],
+      'Game crashed'
+    )
+    if (choice === 'always') {
+      const config = await settings.get()
+      await settings.set({ ...config, telemetry: { ...config.telemetry, crashReportsEnabled: true } })
+      const res = await crash.sendPending()
+      if (!res.success) logger.error('Failed to send pending crash report:', res.error)
+    } else if (choice === 'once') {
+      const res = await crash.sendPending()
+      if (!res.success) logger.error('Failed to send pending crash report:', res.error)
+    } else {
+      await crash.discardPending()
+    }
   })
 }

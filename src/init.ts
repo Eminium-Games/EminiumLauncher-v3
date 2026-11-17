@@ -110,11 +110,24 @@ export async function bootstrap() {
   // 1. Launcher self-update (commit-based, checked at every startup).
   if (await applyLauncherUpdate()) return
 
-  // 2. Load remote config in parallel.
-  const [bg, mn] = await Promise.all([background.get(), maintenance.get()])
+  // 2. Restore the session first: the player's pseudo is needed so the
+  // AdminTool can tell us if they bypass maintenance (`canBypass`).
+  let session: Awaited<ReturnType<typeof auth.refresh>> | null = null
+  try {
+    session = await auth.refresh()
+  } catch (err) {
+    logger.error('Failed to restore session:', err)
+  }
+
+  // 3. Load remote config in parallel.
+  const [bg, mn] = await Promise.all([
+    background.get(),
+    maintenance.get(session && session.success ? session.account : undefined)
+  ])
   const bgUrl = bg?.file?.url ?? DEFAULT_BACKGROUND
 
-  if (mn) {
+  // Maintenance blocks everyone except bypass-listed pseudos (`canBypass`).
+  if (mn && !mn.canBypass) {
     const start = new Date(mn.startTime as Date)
     const end = new Date(mn.endTime as Date)
     maintenanceDates.innerText = `From ${start.toLocaleString([], dateFormatOptions)} to ${end.toLocaleString([], dateFormatOptions)}`
@@ -124,11 +137,11 @@ export async function bootstrap() {
   }
 
   try {
-    const [_, session] = await Promise.all([preloadImage(bgUrl), auth.refresh()])
+    await preloadImage(bgUrl)
 
     if (bgElement) bgElement.style.backgroundImage = `url('${bgUrl}')`
 
-    if (session.success) {
+    if (session && session.success) {
       logger.log(`Session restored: ${(session.account as any).name}`)
       const [__, skins, capes, avatar] = await Promise.all([skin.reload(session.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
       setUser(session.account, { skins, capes, avatar })
