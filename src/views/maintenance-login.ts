@@ -50,7 +50,10 @@ export function initMaintenanceLogin() {
       if (status && status.canBypass) {
         logger.log(`Maintenance bypassed by ${account.name}`)
         setCapsule(null)
+        // Same end-of-bootstrap steps: reveal #app and fade out the overlays.
+        document.querySelector('div#view-loading')?.classList.add('loaded')
         document.querySelector('div#view-maintenance')?.classList.remove('loaded')
+        document.body.classList.add('loaded')
       } else {
         logger.log(`${account.name} is not allowed to bypass maintenance`)
         setCapsule(account)

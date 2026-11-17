@@ -126,6 +126,9 @@ export async function bootstrap() {
     maintenance.get(session && session.success ? session.account : undefined)
   ])
   const bgUrl = bg?.file?.url ?? DEFAULT_BACKGROUND
+  // Set immediately: the maintenance screen may return early (bypass login
+  // happens later, without going through the code below).
+  if (bgElement) bgElement.style.backgroundImage = `url('${bgUrl}')`
 
   // Maintenance blocks everyone except bypass-listed pseudos (`canBypass`).
   if (mn && !mn.canBypass) {
@@ -142,8 +145,6 @@ export async function bootstrap() {
 
   try {
     await preloadImage(bgUrl)
-
-    if (bgElement) bgElement.style.backgroundImage = `url('${bgUrl}')`
 
     if (session && session.success) {
       logger.log(`Session restored: ${(session.account as any).name}`)
