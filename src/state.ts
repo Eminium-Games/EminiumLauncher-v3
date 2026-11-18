@@ -27,55 +27,64 @@ export function logout() {
 }
 
 async function updateUserInterface() {
-  if (!shared.account || !shared.skins) return
+  try {
+    if (!shared.account || !shared.skins) return
 
-  logger.log('Updating UI for user:', shared.account.name)
+    logger.log('Updating UI for user:', shared.account.name)
 
-  const nameEl = document.getElementById('user-name')
-  const avatarEl = document.getElementById('user-avatar') as HTMLImageElement
-  const rankBadgeEl = document.querySelector('.rank-badge') as HTMLElement | null
-  const nameSettingsEl = document.getElementById('settings-user-name')
-  const uuidSettingsEl = document.getElementById('settings-user-uuid')
-  const typeSettingsEl = document.getElementById('settings-user-type')
-  // const emailSettingsEl = document.getElementById('settings-user-email')
-  // const roleSettingsEl = document.getElementById('settings-user-role')
-  // const moneySettingsEl = document.getElementById('settings-user-money')
-  // const statusSettingsEl = document.getElementById('settings-user-status')
-  const avatarSettingsEl = document.getElementById('settings-user-avatar') as HTMLImageElement
+    const nameEl = document.getElementById('user-name')
+    const avatarEl = document.getElementById('user-avatar') as HTMLImageElement | null
+    const rankBadgeEl = document.querySelector('.rank-badge') as HTMLElement | null
+    const nameSettingsEl = document.getElementById('settings-user-name')
+    const uuidSettingsEl = document.getElementById('settings-user-uuid')
+    const typeSettingsEl = document.getElementById('settings-user-type')
+    // const emailSettingsEl = document.getElementById('settings-user-email')
+    // const roleSettingsEl = document.getElementById('settings-user-role')
+    // const moneySettingsEl = document.getElementById('settings-user-money')
+    // const statusSettingsEl = document.getElementById('settings-user-status')
+    const avatarSettingsEl = document.getElementById('settings-user-avatar') as HTMLImageElement | null
 
-  if (nameEl) nameEl.innerText = shared.account.name
-  if (rankBadgeEl) rankBadgeEl.innerText = (shared.account.userProperties?.role as string) ?? 'Member'
-  const headUrl = shared.avatar?.url ?? `https://minotar.net/helm/${encodeURIComponent(shared.account.name)}/256.png`
-  if (avatarEl) {
-    avatarEl.onerror = () => {
-      avatarEl.onerror = null
-      avatarEl.src = 'https://minotar.net/helm/steve/256.png'
+    if (nameEl) nameEl.innerText = shared.account.name
+    if (rankBadgeEl) rankBadgeEl.innerText = (shared.account.userProperties?.role as string) ?? 'Member'
+    const headUrl = shared.avatar?.url ?? `https://minotar.net/helm/${encodeURIComponent(shared.account.name)}/256.png`
+    if (avatarEl) {
+      avatarEl.onerror = () => {
+        avatarEl.onerror = null
+        avatarEl.src = 'https://minotar.net/helm/steve/256.png'
+      }
+      avatarEl.src = headUrl
     }
-    avatarEl.src = headUrl
-  }
-  if (nameSettingsEl) nameSettingsEl.innerText = shared.account.name
-  if (uuidSettingsEl) uuidSettingsEl.innerText = `UUID: ${shared.account.uuid}`
-  if (typeSettingsEl) typeSettingsEl.innerHTML = getAccountIcon(shared.account.meta.type)
-  // const props = shared.account.userProperties ?? {}
-  // if (emailSettingsEl) emailSettingsEl.innerText = props.email ? `Email: ${props.email}` : ''
-  // if (roleSettingsEl) roleSettingsEl.innerText = props.role ? `Role: ${props.role}` : ''
-  // if (moneySettingsEl) moneySettingsEl.innerText = typeof props.money === 'number' ? `Money: ${props.money}` : ''
-  // if (statusSettingsEl) {
-  //   const verified = props.emailVerified ? 'Email verified' : 'Email not verified'
-  //   const banned = props.banned ? `Banned${props.banReason ? ': ' + props.banReason : ''}` : 'Not banned'
-  //   statusSettingsEl.innerText = `${verified} • ${banned}`
-  // }
-  if (avatarSettingsEl) {
-    avatarSettingsEl.onerror = () => {
-      avatarSettingsEl.onerror = null
-      avatarSettingsEl.src = 'https://minotar.net/helm/steve/256.png'
+    if (nameSettingsEl) nameSettingsEl.innerText = shared.account.name
+    if (uuidSettingsEl) uuidSettingsEl.innerText = `UUID: ${shared.account.uuid}`
+    if (typeSettingsEl) typeSettingsEl.innerHTML = getAccountIcon(shared.account.meta.type)
+    if (avatarSettingsEl) {
+      avatarSettingsEl.onerror = () => {
+        avatarSettingsEl.onerror = null
+        avatarSettingsEl.src = 'https://minotar.net/helm/steve/256.png'
+      }
+      avatarSettingsEl.src = headUrl
     }
-    avatarSettingsEl.src = headUrl
-  }
 
-  shared.resetMainView()
-  shared.resetSkinViews()
-  shared.resetCapesViews()
+    // Skin 3D previews must never break login/home: each step is isolated.
+    // They are fire-and-forget on purpose (thumbnails can take seconds).
+    try {
+      await shared.resetMainView()
+    } catch (err) {
+      logger.error('resetMainView failed (non-blocking):', err)
+    }
+    try {
+      await shared.resetSkinViews()
+    } catch (err) {
+      logger.error('resetSkinViews failed (non-blocking):', err)
+    }
+    try {
+      await shared.resetCapesViews()
+    } catch (err) {
+      logger.error('resetCapesViews failed (non-blocking):', err)
+    }
+  } catch (err) {
+    logger.error('updateUserInterface failed (non-blocking):', err)
+  }
 }
 
 export function setView(view: ViewName) {

@@ -50,7 +50,13 @@ export function initHome() {
   let totalDownloadedByType: { type: string; size: number }[] = []
 
   const loadProfiles = async () => {
-    allProfiles = await profiles.get()
+    try {
+      allProfiles = await profiles.get()
+      logger.log(`Profiles loaded: ${allProfiles.length}`)
+    } catch (err) {
+      logger.error('Failed to load profiles:', err)
+      return
+    }
     if (allProfiles.length > 0) {
       const preferredProfile = allProfiles.find((profile) => profile.slug === 'eminium-factions') ?? allProfiles[0]
       selectProfile(preferredProfile)
@@ -95,7 +101,13 @@ export function initHome() {
     if (statusText) statusText.innerHTML = 'Pinging...'
     if (playerCount) playerCount.innerHTML = ''
 
-    const status = selectedProfile ? await server.getStatus(selectedProfile.ip, selectedProfile.port || 25565) : null
+    let status = null
+    try {
+      status = selectedProfile ? await server.getStatus(selectedProfile.ip, selectedProfile.port || 25565) : null
+      logger.log(`Server status for ${selectedProfile?.name ?? 'none'}:`, status ? 'online' : 'offline')
+    } catch (err) {
+      logger.error('Failed to get server status:', err)
+    }
 
     if (status) {
       if (statusDot) {
@@ -120,7 +132,15 @@ export function initHome() {
   const loadNews = async () => {
     if (!newsList) return
     newsList.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">Loading news...</div>'
-    const feed = await news.getNews()
+    let feed
+    try {
+      feed = await news.getNews()
+      logger.log(`News loaded: ${feed?.length ?? 0} items`)
+    } catch (err) {
+      logger.error('Failed to load news:', err)
+      newsList.innerHTML = '<div style="text-align:center; color: #888;">No news available.</div>'
+      return
+    }
 
     newsList.innerHTML = ''
 

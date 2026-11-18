@@ -3,9 +3,10 @@
    (la base de .maintenance-card est identique dans update.scss)
    ========================================================================== */
 
-div.maintenance {
-  position: relative;
-}
+/* NOTE: ne pas toucher au positionnement de div.maintenance (l'overlay doit
+   rester en `position: fixed`, défini dans index.html). Un `relative` ici le
+   remettrait dans le flux et pousserait #app hors de l'écran (écran noir).
+   Le bouton « Administrateur ? » est déjà ancré via .maintenance-top-right. */
 
 div.maintenance-top-right {
   position: absolute;

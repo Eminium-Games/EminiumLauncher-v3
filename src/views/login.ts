@@ -33,7 +33,7 @@ export async function requestEminiumLogin(): Promise<Account | null> {
 /** Load skins/capes/avatar, store the user and enter the home view. */
 export async function enterWithAccount(account: Account) {
   const [__, skins, capes, avatar] = await Promise.all([skin.reload(account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
-  setUser(account, { skins, capes, avatar })
+  await setUser(account, { skins, capes, avatar })
   setView('home')
 }
 

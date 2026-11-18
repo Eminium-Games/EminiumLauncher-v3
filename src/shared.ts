@@ -24,18 +24,27 @@ const shared = {
    * `skins` should be updated before calling this function.
    */
   resetMainView: async () => {
-    const skinCanvasSettingsEl = document.getElementById('skin-container') as HTMLCanvasElement
+    const skinCanvasSettingsEl = document.getElementById('skin-container') as HTMLCanvasElement | null
+    if (!skinCanvasSettingsEl) {
+      logger.warn('resetMainView skipped: #skin-container not found')
+      return
+    }
 
     const activeSkin = shared.skins?.find((s) => s.state === 'active') ?? DEFAULT_SKIN
     const activeCape = shared.capes?.find((c) => c.state === 'active')
 
     if (!shared.mainSkinViewer) {
-      shared.mainSkinViewer = new SkinViewer({
-        canvas: skinCanvasSettingsEl,
-        width: 530,
-        height: 250,
-        preserveDrawingBuffer: true
-      })
+      try {
+        shared.mainSkinViewer = new SkinViewer({
+          canvas: skinCanvasSettingsEl,
+          width: 530,
+          height: 250,
+          preserveDrawingBuffer: true
+        })
+      } catch (err) {
+        logger.error('SkinViewer creation failed (WebGL?), skipping 3D preview:', err)
+        return
+      }
 
       shared.mainSkinViewer.animation = new WalkingAnimation()
       shared.mainSkinViewer.animation!.speed = 0.3
@@ -45,24 +54,37 @@ const shared = {
       shared.mainSkinViewer.controls.rotateSpeed = 0.3
     }
 
-    shared.mainSkinViewer.loadSkin(activeSkin.url, { model: activeSkin.variant === 'slim' ? 'slim' : 'default' })
-    if (activeCape) shared.mainSkinViewer.loadCape(activeCape.url)
-    else shared.mainSkinViewer.resetCape()
+    try {
+      shared.mainSkinViewer.loadSkin(activeSkin.url, { model: activeSkin.variant === 'slim' ? 'slim' : 'default' })
+      if (activeCape) shared.mainSkinViewer.loadCape(activeCape.url)
+      else shared.mainSkinViewer.resetCape()
+    } catch (err) {
+      logger.error('Failed to load 3D skin preview:', err)
+    }
   },
   /**
    * `skins` should be updated before calling this function.
    */
   resetSkinViews: async () => {
     const skinGallerySettingsEl = document.getElementById('skin-gallery')!
+    if (!skinGallerySettingsEl) {
+      logger.warn('resetSkinViews skipped: #skin-gallery not found')
+      return
+    }
 
     skinGallerySettingsEl.innerHTML = ''
 
     if (!shared.auxiliarySkinViewer) {
-      shared.auxiliarySkinViewer = new SkinViewer({
-        canvas: document.createElement('canvas'),
-        width: 159.3,
-        height: 180
-      })
+      try {
+        shared.auxiliarySkinViewer = new SkinViewer({
+          canvas: document.createElement('canvas'),
+          width: 159.3,
+          height: 180
+        })
+      } catch (err) {
+        logger.error('Auxiliary SkinViewer creation failed, skipping thumbnails:', err)
+        return
+      }
 
       shared.auxiliarySkinViewer.animation = new WalkingAnimation()
       shared.auxiliarySkinViewer.animation!.progress = 0.5
@@ -115,11 +137,16 @@ const shared = {
         skinDiv.appendChild(skinImg)
         skinGallerySettingsEl?.appendChild(skinDiv)
       } else {
-        await shared.auxiliarySkinViewer.loadSkin(s.url, { model: s.variant === 'slim' ? 'slim' : 'default' })
-        shared.auxiliarySkinViewer.render()
+        try {
+          await shared.auxiliarySkinViewer.loadSkin(s.url, { model: s.variant === 'slim' ? 'slim' : 'default' })
+          shared.auxiliarySkinViewer.render()
 
-        skinImg.src = shared.auxiliarySkinViewer.canvas.toDataURL()
-        shared.cachedSkinThumbnails.set(source, skinImg.src)
+          skinImg.src = shared.auxiliarySkinViewer.canvas.toDataURL()
+          shared.cachedSkinThumbnails.set(source, skinImg.src)
+        } catch (err) {
+          logger.error(`Skipping skin thumbnail (non-blocking):`, err)
+          continue
+        }
       }
 
       skinDiv.appendChild(skinImg)
@@ -130,7 +157,11 @@ const shared = {
    * `capes` should be updated before calling this function.
    */
   resetCapesViews: async () => {
-    const capeGallerySettingsEl = document.getElementById('cape-gallery')!
+    const capeGallerySettingsEl = document.getElementById('cape-gallery')
+    if (!capeGallerySettingsEl) {
+      logger.warn('resetCapesViews skipped: #cape-gallery not found')
+      return
+    }
     const inactive = !shared.capes?.some((c) => c.state === 'active')
 
     capeGallerySettingsEl.innerHTML = ''
@@ -181,20 +212,25 @@ const shared = {
         capeDiv.appendChild(capeImg)
         capeGallerySettingsEl?.appendChild(capeDiv)
       } else {
-        const req = await fetch(c.url)
-        const blob = await req.blob()
-        const img = await createImageBitmap(blob)
+        try {
+          const req = await fetch(c.url)
+          const blob = await req.blob()
+          const img = await createImageBitmap(blob)
 
-        const canvas = document.createElement('canvas')
-        canvas.width = 100
-        canvas.height = 160
+          const canvas = document.createElement('canvas')
+          canvas.width = 100
+          canvas.height = 160
 
-        const ctx = canvas.getContext('2d')!
-        ctx.imageSmoothingEnabled = false
-        ctx.drawImage(img, 1, 1, 10, 16, 0, 0, 100, 160)
+          const ctx = canvas.getContext('2d')!
+          ctx.imageSmoothingEnabled = false
+          ctx.drawImage(img, 1, 1, 10, 16, 0, 0, 100, 160)
 
-        capeImg.src = canvas.toDataURL()
-        shared.cachedCapeThumbnails.set(c.url, capeImg.src)
+          capeImg.src = canvas.toDataURL()
+          shared.cachedCapeThumbnails.set(c.url, capeImg.src)
+        } catch (err) {
+          logger.error(`Skipping cape thumbnail (non-blocking):`, err)
+          continue
+        }
       }
 
       capeSpan.innerHTML = c.alias

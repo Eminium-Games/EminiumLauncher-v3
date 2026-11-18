@@ -148,8 +148,23 @@ export async function bootstrap() {
 
     if (session && session.success) {
       logger.log(`Session restored: ${(session.account as any).name}`)
-      const [__, skins, capes, avatar] = await Promise.all([skin.reload(session.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
-      setUser(session.account, { skins, capes, avatar })
+      try {
+        const [__, skins, capes, avatar] = await Promise.all([skin.reload(session.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
+        try {
+          await setUser(session.account, { skins, capes, avatar })
+        } catch (err) {
+          logger.error('setUser failed, continuing to home anyway:', err)
+        }
+      } catch (err) {
+        logger.error('Skin loading failed, continuing to home anyway:', err)
+        // Still enter home with minimal user data so the app never stays black.
+        try {
+          await setUser(session.account, { skins: null, capes: null, avatar: null })
+        } catch (err2) {
+          logger.error('Minimal setUser failed:', err2)
+        }
+      }
+      logger.log('Entering home view')
       setView('home')
     } else {
       logger.log('No session found - showing login')
@@ -164,5 +179,6 @@ export async function bootstrap() {
     document.querySelector('div#view-loading')?.classList.add('loaded')
     await new Promise((resolve) => setTimeout(resolve, 200))
     document.body.classList.add('loaded')
+    logger.log('Bootstrap finished, app shown')
   }
 }
