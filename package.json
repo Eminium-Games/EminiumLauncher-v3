@@ -4,7 +4,7 @@
   "author": "Fourty3000",
   "description": "Launcher for Eminium Games",
   "private": true,
-  "version": "3.1.4.19",
+  "version": "3.4.19",
   "license": "MIT",
   "main": "dist-electron/main.js",
   "scripts": {
