@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
+          - os: macos-15
             target: mac
             arch: x64,arm64
             script: release:mac
@@ -28,6 +28,7 @@ jobs:
             script: release:win
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
 
     steps:
       - name: Acquire sources
