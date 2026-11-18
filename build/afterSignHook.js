@@ -4,7 +4,7 @@ const { notarize } = require('@electron/notarize')
 const { spawnSync } = require('node:child_process')
 
 const APPLE_ID                 = process.env.APPLE_ID
-const APPLE_APP_SPECIIC_P      = process.env.APPLE_APP_SPECIIC_PASSWORD
+const APPLE_APP_SPECIFIC_P     = process.env.APPLE_APP_SPECIFIC_PASSWORD
 const APPLE_TEAM_ID            = process.env.APPLE_TEAM_ID
 const SKIP_NOTARIZE            = process.env.SKIP_NOTARIZE === 'true'
 
@@ -15,20 +15,18 @@ async function submitForNotarization(context) {
     return
   }
 
-  if (!APPLE_ID || !APPLE_APP_SPECIIC_P || !APPLE_TEAM_ID) {
-    throw new Error('Missing APPLE_ID / APPLE_APP_SPECIIC_PASSWORD / APPLE_TEAM_ID')
+  if (!APPLE_ID || !APPLE_APP_SPECIFIC_P || !APPLE_TEAM_ID) {
+    throw new Error('Missing APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID')
   }
 
   const appName               = packager.appInfo.productFileName
   const appBundlePath         = require('node:path').join(appOutDir, `${appName}.app`)
 
-  stapleAppBundle(appBundlePath)
-
   await notarize({
     tool: 'notarytool',
     appBundlePath,
     appleId: APPLE_ID,
-    appleIdPassword: APPLE_APP_SPECIIC_P,
+    appleIdPassword: APPLE_APP_SPECIFIC_P,
     teamId: APPLE_TEAM_ID
   })
 
