@@ -33,31 +33,36 @@
       div.update {
         position: fixed;
         top: 0;
+        left: 0;
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
         width: 100vw;
         background-color: #121212;
-        transition: opacity 0.4s ease-in-out;
+        transition: opacity 0.4s ease-in-out, visibility 0.4s;
+        /* Caché = ni visible ni cliquable : sinon l'overlay transparent
+           (ou #app vide au-dessus) avale les clics du bouton admin. */
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
       }
 
       div.loading {
         opacity: 1;
+        visibility: visible;
       }
 
       div.loading.loaded {
         opacity: 0;
-      }
-
-      div.maintenance,
-      div.update {
-        opacity: 0;
+        visibility: hidden;
       }
 
       div.maintenance.loaded,
       div.update.loaded {
         opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
       }
     </style>
   </head>

@@ -104,6 +104,11 @@ async function applyLauncherUpdate(): Promise<boolean> {
 export async function bootstrap() {
   logger.log('Initializing Launcher...')
 
+  // Reset stale blocking overlays (ex: double exécution via HMR) : on
+  // re-décide juste après, donc partir d'un état propre est toujours sûr.
+  document.querySelector('div#view-maintenance')?.classList.remove('loaded')
+  document.querySelector('div#view-update')?.classList.remove('loaded')
+
   const bgElement = document.querySelector('.app-background') as HTMLElement
   const maintenanceDates = document.getElementById('maintenance-dates')!
   const maintenanceReason = document.getElementById('maintenance-reason')!
