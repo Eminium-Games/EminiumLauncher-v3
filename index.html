@@ -247,7 +247,7 @@
               <h3 id="tab-game-title">Minecraft configuration</h3>
 
               <div class="setting-group">
-                <label><i class="fa-fw fa-solid fa-memory"></i>&nbsp;&nbsp;Allocated RAM</label>
+                <label id="label-ram"><i class="fa-fw fa-solid fa-memory"></i>&nbsp;&nbsp;Allocated RAM</label>
 
                 <div class="dual-slider-container">
                   <div class="slider-track"></div>
@@ -264,12 +264,12 @@
               </div>
 
               <div class="setting-group">
-                <label><i class="fa-fw fa-solid fa-display"></i>&nbsp;&nbsp;Window size</label>
+                <label id="label-resolution"><i class="fa-fw fa-solid fa-display"></i>&nbsp;&nbsp;Window size</label>
                 <select id="resolution-select"></select>
               </div>
 
               <div class="setting-group">
-                <label for="launcher-action"><i class="fa-solid fa-power-off"></i>&nbsp;&nbsp;Action after launch</label>
+                <label for="launcher-action" id="label-launcher-action"><i class="fa-solid fa-power-off"></i>&nbsp;&nbsp;Action after launch</label>
                 <div class="select-wrapper">
                   <select id="launcher-action-select">
                     <option value="close">Close launcher</option>
@@ -280,7 +280,7 @@
               </div>
 
               <div class="setting-group">
-                <label><i class="fa-brands fa-java"></i>&nbsp;&nbsp;Java version</label>
+                <label id="label-java"><i class="fa-brands fa-java"></i>&nbsp;&nbsp;Java version</label>
                 <div class="java-selector">
                   <select id="java-select">
                     <option value="bundled">Use bundled Java (recommended)</option>
@@ -375,17 +375,17 @@
                 </div>
 
                 <div class="account-actions">
-                  <a href="https://eminium.ovh/profile" target="_blank" class="btn btn-secondary">
+                  <a href="https://eminium.ovh/profile" target="_blank" class="btn btn-secondary" id="btn-manage-account">
                     <i class="fa-fw fa-solid fa-external-link-alt"></i><span>Manage Account</span>
                   </a>
-                  <button id="btn-logout" class="btn btn-danger"><i class="fa-fw fa-solid fa-right-from-bracket"></i><span>Log out</span></button>
+                  <button id="btn-logout" class="btn btn-danger"><i class="fa-fw fa-solid fa-right-from-bracket"></i><span id="label-logout">Log out</span></button>
                 </div>
 
                 <div class="setting-group" style="margin-top: 1.5rem;">
-                  <label><i class="fa-fw fa-solid fa-arrows-rotate"></i>&nbsp;&nbsp;Launcher updates</label>
+                  <label id="label-launcher-updates"><i class="fa-fw fa-solid fa-arrows-rotate"></i>&nbsp;&nbsp;Launcher updates</label>
                   <p id="version" style="margin: 0.5rem 0; opacity: 0.8;"></p>
                   <p id="launcher-commit" style="margin: 0.5rem 0; opacity: 0.8;"></p>
-                  <button id="btn-check-updates" class="btn btn-secondary"><i class="fa-fw fa-solid fa-download"></i><span>Check for updates</span></button>
+                  <button id="btn-check-updates" class="btn btn-secondary"><i class="fa-fw fa-solid fa-download"></i><span id="label-check-updates">Check for updates</span></button>
                   <p id="update-status" style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8;"></p>
                 </div>
               </div>
@@ -395,7 +395,7 @@
               <h3 id="tab-privacy-title">Privacy</h3>
 
               <div class="setting-group">
-                <label class="privacy-option">
+                <label class="privacy-option" id="label-telemetry-stats">
                   <input type="checkbox" id="telemetry-stats" />
                   <span>Anonymous usage statistics</span>
                 </label>
@@ -406,7 +406,7 @@
               </div>
 
               <div class="setting-group">
-                <label class="privacy-option">
+                <label class="privacy-option" id="label-telemetry-crash">
                   <input type="checkbox" id="telemetry-crash" />
                   <span>Anonymous crash reports</span>
                 </label>

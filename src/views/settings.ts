@@ -61,6 +61,47 @@ export async function initSettings() {
   if (patchDesc) patchDesc.textContent = t('patch.description')
   const installPatchedJavaBtn = document.getElementById('btn-install-patched-java') as HTMLButtonElement | null
   const installPatchedJavaStatus = document.getElementById('install-patched-java-status')
+
+  // Traductions supplémentaires
+  const el = (id: string) => document.getElementById(id)
+  const setHtml = (id: string, html: string) => { const e = el(id); if (e) e.innerHTML = html }
+
+  setHtml('label-ram', `<i class="fa-fw fa-solid fa-memory"></i>&nbsp;&nbsp;${t('settings.ram')}`)
+  setHtml('label-resolution', `<i class="fa-fw fa-solid fa-display"></i>&nbsp;&nbsp;${t('settings.resolution')}`)
+  setHtml('label-launcher-action', `<i class="fa-solid fa-power-off"></i>&nbsp;&nbsp;${t('settings.launcher_action')}`)
+  setHtml('label-java', `<i class="fa-brands fa-java"></i>&nbsp;&nbsp;${t('settings.java')}`)
+  setHtml('label-launcher-updates', `<i class="fa-fw fa-solid fa-arrows-rotate"></i>&nbsp;&nbsp;${t('settings.launcher_updates')}`)
+
+  const launcherActionSelect = document.getElementById('launcher-action-select') as HTMLSelectElement | null
+  if (launcherActionSelect) {
+    const optClose = launcherActionSelect.querySelector('option[value="close"]')
+    const optKeep = launcherActionSelect.querySelector('option[value="keep"]')
+    const optHide = launcherActionSelect.querySelector('option[value="hide"]')
+    if (optClose) optClose.textContent = t('settings.launcher_action_close')
+    if (optKeep) optKeep.textContent = t('settings.launcher_action_keep')
+    if (optHide) optHide.textContent = t('settings.launcher_action_hide')
+  }
+
+  const btnManageAccount = document.getElementById('btn-manage-account')
+  const manageSpan = btnManageAccount?.querySelector('span')
+  if (manageSpan) manageSpan.textContent = t('settings.manage_account')
+  const labelLogout = document.getElementById('label-logout')
+  if (labelLogout) labelLogout.textContent = t('settings.logout')
+  const labelCheckUpdates = document.getElementById('label-check-updates')
+  if (labelCheckUpdates) labelCheckUpdates.textContent = t('settings.check_updates')
+
+  const labelTelemetryStats = document.getElementById('label-telemetry-stats')
+  if (labelTelemetryStats) {
+    const span = labelTelemetryStats.querySelector('span')
+    if (span) span.textContent = t('settings.telemetry_stats')
+  }
+  const labelTelemetryCrash = document.getElementById('label-telemetry-crash')
+  if (labelTelemetryCrash) {
+    const span = labelTelemetryCrash.querySelector('span')
+    if (span) span.textContent = t('settings.telemetry_crash')
+  }
+
+  if (installPatchedJavaBtn) installPatchedJavaBtn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
   if (installPatchedJavaBtn) installPatchedJavaBtn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
 
   installPatchedJavaBtn?.addEventListener('click', async () => {
