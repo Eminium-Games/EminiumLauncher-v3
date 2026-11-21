@@ -235,8 +235,9 @@
             <nav>
               <button class="btn nav-btn active" data-tab="game"><i class="fa-solid fa-gamepad"></i><span>Game</span></button>
               <!-- <button class="btn nav-btn" data-tab="skin"><i class="fa-solid fa-images"></i><span>Skin</span></button> -->
+              <button class="btn nav-btn" data-tab="patch"><i class="fa-solid fa-shield-halved"></i><span>Patch</span></button>
               <button class="btn nav-btn" data-tab="account"><i class="fa-solid fa-gears"></i><span>Account</span></button>
-              <button class="btn nav-btn" data-tab="privacy"><i class="fa-solid fa-shield-halved"></i><span>Privacy</span></button>
+              <button class="btn nav-btn" data-tab="privacy"><i class="fa-solid fa-lock"></i><span>Privacy</span></button>
             </nav>
             <p id="version"></p>
           </aside>
@@ -286,10 +287,6 @@
                     <option value="system">Use system Java (PATH)</option>
                   </select>
                 </div>
-                <button id="btn-install-patched-java" class="btn btn-secondary" style="margin-top:8px;">
-                  <i class="fa-solid fa-download"></i> Install patched Java 17 (CVE-2026-114938)
-                </button>
-                <p id="install-patched-java-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
               </div>
             </section>
 
@@ -339,6 +336,24 @@
                 <label><i class="fa-fw fa-solid fa-square"></i>&nbsp;&nbsp;Cape</label>
 
                 <div id="cape-gallery" class="skin-gallery"></div>
+              </div>
+            </section>
+
+            <section id="tab-patch" class="tab-content">
+              <h3>Java4Shell patch (CVE-2026-114938)</h3>
+              <p style="margin-bottom:1rem;opacity:0.85;">
+                CVE-2026-114938 ("Java4Shell") is a memory corruption in OpenJDK's
+                hardware-accelerated Base64 decoder (AVX-512 VBMI), affecting Java 17.0.6+,
+                21, 25 and 27 on x86-64. The launcher already applies the mitigation
+                <code>-XX:-UseBASE64Intrinsics</code> to every launch. You can also install
+                a patched Java 17 runtime and force its use.
+              </p>
+              <div class="setting-group">
+                <label><i class="fa-fw fa-solid fa-shield-halved"></i>&nbsp;&nbsp;Patched Java 17</label>
+                <button id="btn-install-patched-java" class="btn btn-secondary" style="margin-top:8px;">
+                  <i class="fa-solid fa-download"></i> Install patched Java 17
+                </button>
+                <p id="install-patched-java-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
               </div>
             </section>
 
