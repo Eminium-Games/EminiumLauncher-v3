@@ -37,6 +37,7 @@ export async function initSettings() {
     try {
       const path = await settings.installPatchedJava17()
       if (path) {
+        if (installPatchedJavaBtn) installPatchedJavaBtn.style.display = 'none'
         if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = `Installed: ${path}`
         await Dialog.show('Patched Java 17 installed. Select "Use system Java (PATH)" or restart to use it.', [{ text: 'OK', type: 'ok' }])
       } else {
@@ -49,6 +50,16 @@ export async function initSettings() {
       if (installPatchedJavaBtn) installPatchedJavaBtn.disabled = false
     }
   })
+  // Masque le bouton d'installation si un Java patché est déjà disponible.
+  try {
+    const resolved = await settings.resolveJava()
+    if (resolved && parseInt(resolved.version.split('.')[0], 10) >= 17) {
+      if (installPatchedJavaBtn) installPatchedJavaBtn.style.display = 'none'
+      if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = `Patched Java already available: ${resolved.version} (${resolved.path})`
+    }
+  } catch (err) {
+    logger.error('resolveJava check failed:', err)
+  }
   const versionElem = document.getElementById('version')
   if (versionElem) versionElem.innerText = `Version ${sysInfo.version}`
 
