@@ -154,22 +154,8 @@ export async function installPatchedJava17(): Promise<string | null> {
     return null
   }
 
-  // Adoptium API: latest Temurin 17 JRE for Windows x64
-  const apiUrl = 'https://api.adoptium.net/v3/assets/latest/17/ga?architecture=x64&heap_size=normal&image_type=jre&os=windows&vendor=eclipse'
-  let downloadUrl: string | null = null
-  try {
-    const res = await fetch(apiUrl)
-    const data = await res.json()
-    const binary = Array.isArray(data) && data[0]?.binaries?.[0]
-    downloadUrl = binary?.package?.link ?? null
-  } catch (err) {
-    logger.error('Failed to query Adoptium API:', err)
-    return null
-  }
-  if (!downloadUrl) {
-    logger.error('No download URL from Adoptium')
-    return null
-  }
+  // Adoptium binary endpoint (redirects to the actual zip).
+  const downloadUrl = 'https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse'
 
   const zipPath = path.join(os.tmpdir(), 'temurin-17-jre.zip')
   try {
