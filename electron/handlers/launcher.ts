@@ -7,6 +7,7 @@ import { ADMINTOOL_URL, AUTO_START_MINECRAFT } from '../const'
 import { resolvePatchedJava } from './java-resolver'
 import { attachStatsProvider } from './stats'
 import { maybeSendCrashReport } from './crash-reports'
+import { setActivity } from './discord'
 
 // Défense en profondeur contre CVE-2026-114938 ("Java4Shell") : ces variables
 // d'environnement sont héritées par le process Java lancé par eml-lib et par
@@ -187,6 +188,7 @@ export function registerLauncherHandlers(mainWindow: BrowserWindow) {
     launcher.on('launch_launch', (info) => {
       logger.log(`Launching Minecraft ${info.minecraft?.version ?? '?'} (${info.minecraft?.loader?.loader ?? 'vanilla'}${info.minecraft?.loader?.version ? ` ${info.minecraft.loader.version}` : ''})...`)
       mainWindow.webContents.send('game:launch_launch', info)
+      setActivity({ state: 'Playing Eminium', details: info.minecraft?.version ?? 'Minecraft', largeImageKey: 'logo' })
       if (settings.launcherAction === 'close') {
         setTimeout(() => app.quit(), 5000)
       } else if (settings.launcherAction === 'hide') {

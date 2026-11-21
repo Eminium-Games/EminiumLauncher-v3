@@ -9,6 +9,10 @@ export const AUTO_START_SERVER = {
   port: 25566
 }
 
+// Discord Rich Presence (optionnel) — crée une application sur https://discord.com/developers/applications
+// et colle son Client ID ici. Laisse vide pour désactiver.
+export const DISCORD_CLIENT_ID = '1484903800266293379'
+
 export const AUTO_START_MINECRAFT = {
   version: '1.20.1',
   loader: {

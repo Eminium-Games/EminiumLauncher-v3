@@ -5,6 +5,8 @@ import logger from 'electron-log/renderer'
 import type { IGameSettings } from '../../electron/handlers/settings'
 import shared from '../shared'
 import { t } from '../i18n'
+import { enterWithAccount, requestEminiumLogin } from './login'
+import { setUser } from '../state'
 
 const resolutionList = [
   { label: 'Auto (default)', value: '854x480', width: 854, height: 480 },
@@ -87,8 +89,10 @@ export async function initSettings() {
   if (manageSpan) manageSpan.textContent = t('settings.manage_account')
   const labelLogout = document.getElementById('label-logout')
   if (labelLogout) labelLogout.textContent = t('settings.logout')
-  const labelCheckUpdates = document.getElementById('label-check-updates')
-  if (labelCheckUpdates) labelCheckUpdates.textContent = t('settings.check_updates')
+  const labelOpenLogs = document.getElementById('label-open-logs')
+  if (labelOpenLogs) labelOpenLogs.textContent = t('settings.open_logs')
+  const labelRamAuto = document.getElementById('label-ram-auto')
+  if (labelRamAuto) labelRamAuto.textContent = t('settings.ram_auto')
 
   const labelTelemetryStats = document.getElementById('label-telemetry-stats')
   if (labelTelemetryStats) {
@@ -141,7 +145,91 @@ export async function initSettings() {
   if (versionElem) versionElem.innerText = t('settings.version', { version: sysInfo.version })
 
   const commitElem = document.getElementById('launcher-commit')
-  const checkUpdatesBtn = document.getElementById('btn-check-updates') as HTMLButtonElement | null
+  const btnRamAuto = document.getElementById('btn-ram-auto') as HTMLButtonElement | null
+  btnRamAuto?.addEventListener('click', () => {
+    const minInput = document.getElementById('ram-min') as HTMLInputElement
+    const maxInput = document.getElementById('ram-max') as HTMLInputElement
+    const totalMem = sysInfo.totalMem
+    if (minInput && maxInput) {
+      minInput.value = '2'
+      maxInput.value = String(Math.min(Math.max(Math.round(totalMem / 4), 2), 8))
+      minInput.dispatchEvent(new Event('input'))
+      maxInput.dispatchEvent(new Event('input'))
+    }
+  })
+  const repairGameBtn = document.getElementById('btn-repair-game') as HTMLButtonElement | null
+  repairGameBtn?.addEventListener('click', async () => {
+    const ok = await Dialog.show('This will delete the downloaded game files (versions & libraries) and re-download them on next launch. Your saves are kept. Continue?', [{ text: 'Cancel', type: 'cancel' }, { text: 'Repair', type: 'danger' }])
+    if (!ok) return
+    const res = await system.repairGame()
+    if (res.success) {
+      await Dialog.show(`Repaired: deleted ${res.deleted ?? 0} folders. Relaunch the game to re-download.`, [{ text: 'OK', type: 'ok' }])
+    } else {
+      await Dialog.show(`Repair failed: ${res.error ?? 'unknown error'}`, [{ text: 'OK', type: 'ok' }])
+    }
+  })
+  const openLogsBtn = document.getElementById('btn-open-logs') as HTMLButtonElement | null
+  openLogsBtn?.addEventListener('click', async () => {
+    await system.openLogs()
+  })
+
+  async function renderAccounts() {
+    const list = document.getElementById('accounts-list')
+    if (!list) return
+    list.innerHTML = ''
+    let accounts: { name: string; uuid: string; role?: string; active: boolean }[] = []
+    try {
+      accounts = await auth.accounts()
+    } catch (err) {
+      logger.error('Failed to load accounts:', err)
+    }
+    if (accounts.length === 0) {
+      list.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">No saved accounts.</p>'
+      return
+    }
+    accounts.forEach((acc, idx) => {
+      const row = document.createElement('div')
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line-strong);border-radius:4px;'
+      const name = document.createElement('span')
+      name.style.flex = '1'
+      name.textContent = `${acc.name}${acc.active ? ' (active)' : ''}`
+      row.appendChild(name)
+      if (!acc.active) {
+        const switchBtn = document.createElement('button')
+        switchBtn.className = 'btn btn-secondary'
+        switchBtn.textContent = 'Switch'
+        switchBtn.onclick = async () => {
+          const res = await auth.switch(idx)
+          if (res.success && 'account' in res && res.account) {
+            const [__, skins, capes, avatar] = await Promise.all([skin.reload(res.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
+            await setUser(res.account, { skins, capes, avatar })
+            await renderAccounts()
+          }
+        }
+        row.appendChild(switchBtn)
+      }
+      const removeBtn = document.createElement('button')
+      removeBtn.className = 'btn btn-danger'
+      removeBtn.textContent = 'Remove'
+      removeBtn.onclick = async () => {
+        await auth.remove(idx)
+        await renderAccounts()
+      }
+      row.appendChild(removeBtn)
+      list.appendChild(row)
+    })
+  }
+
+  const btnAddAccount = document.getElementById('btn-add-account') as HTMLButtonElement | null
+  btnAddAccount?.addEventListener('click', async () => {
+    const account = await requestEminiumLogin()
+    if (account) {
+      await enterWithAccount(account)
+      await renderAccounts()
+    }
+  })
+
+  renderAccounts()
   const updateStatus = document.getElementById('update-status')
 
   const setStatus = (text: string) => {
@@ -155,6 +243,7 @@ export async function initSettings() {
     if (commitElem) commitElem.innerText = ''
   }
 
+  const checkUpdatesBtn = document.getElementById('btn-check-updates') as HTMLButtonElement | null
   checkUpdatesBtn?.addEventListener('click', async () => {
     checkUpdatesBtn.disabled = true
     setStatus('Checking for updates...')

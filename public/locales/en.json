@@ -27,6 +27,7 @@
   "maintenance.not_allowed": "{name} is not allowed to bypass maintenance",
 
   "home.play": "PLAY",
+  "home.select_profile": "Select Profile",
   "home.news": "News",
   "home.preparing_download": "Preparing download...",
   "home.downloading_files": "Downloading files...",
@@ -65,6 +66,9 @@
   "settings.logout": "Log out",
   "settings.launcher_updates": "Launcher updates",
   "settings.check_updates": "Check for updates",
+  "settings.open_logs": "Open logs",
+  "settings.repair_game": "Repair game files",
+  "settings.ram_auto": "Auto",
   "settings.up_to_date": "You are up to date.",
   "settings.offline": "Cannot reach GitHub, check your connection.",
   "settings.build_pending": "CI has not built this commit yet, try again later.",

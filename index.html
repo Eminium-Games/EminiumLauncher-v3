@@ -261,6 +261,7 @@
                   <span id="ram-min-label">2 GB</span>
                   <span id="ram-max-label">8 GB</span>
                 </div>
+                <button id="btn-ram-auto" class="btn btn-secondary" style="margin-top:8px;"><i class="fa-solid fa-wand-magic-sparkles"></i><span id="label-ram-auto">Auto</span></button>
               </div>
 
               <div class="setting-group">
@@ -381,11 +382,19 @@
                   <button id="btn-logout" class="btn btn-danger"><i class="fa-fw fa-solid fa-right-from-bracket"></i><span id="label-logout">Log out</span></button>
                 </div>
 
+                <div class="setting-group" style="margin-top: 1.5rem;" id="accounts-group">
+                  <label><i class="fa-fw fa-solid fa-users"></i>&nbsp;&nbsp;Saved accounts</label>
+                  <div id="accounts-list" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+                  <button id="btn-add-account" class="btn btn-secondary" style="margin-top:8px;"><i class="fa-solid fa-plus"></i> Add account</button>
+                </div>
+
                 <div class="setting-group" style="margin-top: 1.5rem;">
                   <label id="label-launcher-updates"><i class="fa-fw fa-solid fa-arrows-rotate"></i>&nbsp;&nbsp;Launcher updates</label>
                   <p id="version" style="margin: 0.5rem 0; opacity: 0.8;"></p>
                   <p id="launcher-commit" style="margin: 0.5rem 0; opacity: 0.8;"></p>
                   <button id="btn-check-updates" class="btn btn-secondary"><i class="fa-fw fa-solid fa-download"></i><span id="label-check-updates">Check for updates</span></button>
+                  <button id="btn-open-logs" class="btn btn-secondary" style="margin-top:8px;"><i class="fa-fw fa-solid fa-folder-open"></i><span id="label-open-logs">Open logs</span></button>
+                  <button id="btn-repair-game" class="btn btn-danger" style="margin-top:8px;"><i class="fa-fw fa-solid fa-wrench"></i><span id="label-repair-game">Repair game files</span></button>
                   <p id="update-status" style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8;"></p>
                 </div>
               </div>

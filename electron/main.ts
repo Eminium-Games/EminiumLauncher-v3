@@ -15,6 +15,8 @@ import { registerSettingsHandlers } from './handlers/settings'
 import { registerSkinHandlers } from './handlers/skin'
 import { initStats } from './handlers/stats'
 import { registerUpdaterHandlers } from './handlers/updater'
+import { initDiscordRPC, setActivity } from './handlers/discord'
+import { DISCORD_CLIENT_ID } from './const'
 
 
 import logger from 'electron-log/main'
@@ -230,6 +232,9 @@ function bootstrapApplication() {
   configureAppMenu()
   forgeSecureWindow()
   wireIpcHandlers()
+  if (DISCORD_CLIENT_ID) {
+    void initDiscordRPC(DISCORD_CLIENT_ID)
+  }
 }
 
 app.whenReady().then(bootstrapApplication)

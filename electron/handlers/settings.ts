@@ -1,4 +1,4 @@
-import { ipcMain, app, screen, dialog } from 'electron'
+import { ipcMain, app, screen, dialog, shell } from 'electron'
 import logger from 'electron-log/main'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -111,6 +111,37 @@ export function registerSettingsHandlers() {
       version: app.getVersion(),
       locale: app.getLocale()
     }
+  })
+
+  ipcMain.handle('system:open_logs', async () => {
+    try {
+      const logsPath = app.getPath('logs')
+      await shell.openPath(logsPath)
+      return true
+    } catch (err) {
+      logger.error('Failed to open logs folder:', err)
+      return false
+    }
+  })
+
+  ipcMain.handle('system:repair_game', async () => {
+    const root = path.join(process.env.APPDATA || app.getPath('appData'), '.eminiumgames', 'eminium-factions')
+    const targets = ['versions', 'libraries']
+    let deleted = 0
+    for (const t of targets) {
+      const p = path.join(root, t)
+      try {
+        if (fs.existsSync(p)) {
+          fs.rmSync(p, { recursive: true, force: true })
+          deleted++
+          logger.log(`Repaired (deleted): ${p}`)
+        }
+      } catch (err) {
+        logger.error(`Failed to delete ${p}:`, err)
+        return { success: false, error: String(err), deleted }
+      }
+    }
+    return { success: true, deleted, root }
   })
 
   ipcMain.handle('settings:pick_java', async () => {

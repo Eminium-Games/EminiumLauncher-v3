@@ -9,9 +9,14 @@ const sessionPath = path.join(app.getPath('userData'), 'session.json')
 
 export type IAuthResponse = { success: true; account: Account } | { success: false; error: string }
 
-type StoredSession = {
+type StoredAccount = {
   account: Account
   savedAt: string
+}
+
+type SessionData = {
+  accounts: StoredAccount[]
+  activeIndex: number
 }
 
 type SessionFile = {
@@ -101,7 +106,6 @@ async function azVerify(account: Account): Promise<Account> {
   }
   const verified = toAccount(data)
   if (!verified.accessToken) {
-    // keep previous token if server did not return a new one
     verified.accessToken = account.accessToken
     verified.clientToken = account.clientToken
   }
@@ -116,9 +120,22 @@ async function azLogout(account: Account): Promise<void> {
   }
 }
 
-function normalizeSession(data: unknown): StoredSession | null {
-  if (!data || typeof data !== 'object') return null
+function normalizeAccount(raw: any): Account | null {
+  if (!raw || typeof raw !== 'object') return null
+  if (raw.account && raw.account.accessToken !== undefined) {
+    if (!raw.account.meta) raw.account.meta = { online: false, type: 'azuriom', url: AZURIOM_URL }
+    return raw.account as Account
+  }
+  if (raw.accessToken !== undefined && raw.name && raw.uuid) {
+    const account = raw as Account
+    if (!account.meta) account.meta = { online: false, type: 'azuriom', url: AZURIOM_URL }
+    return account
+  }
+  return null
+}
 
+function normalizeSessionData(data: unknown): SessionData | null {
+  if (!data || typeof data !== 'object') return null
   const raw = data as any
 
   // New encrypted wrapper
@@ -130,36 +147,37 @@ function normalizeSession(data: unknown): StoredSession | null {
       } else {
         json = raw.payload
       }
-      return normalizeSession(JSON.parse(json))
+      return normalizeSessionData(JSON.parse(json))
     } catch (err) {
       logger.error('Failed to decrypt session:', err)
       return null
     }
   }
 
-  if (raw.account && raw.account.accessToken !== undefined) {
-    // ensure meta
-    if (!raw.account.meta) raw.account.meta = { online: false, type: 'azuriom', url: AZURIOM_URL }
-    return { account: raw.account, savedAt: raw.savedAt ?? new Date().toISOString() }
+  // Multi-account format
+  if (Array.isArray(raw.accounts)) {
+    const accounts: StoredAccount[] = []
+    for (const entry of raw.accounts) {
+      const acc = normalizeAccount(entry)
+      if (acc) accounts.push({ account: acc, savedAt: entry.savedAt ?? new Date().toISOString() })
+    }
+    if (accounts.length === 0) return null
+    let activeIndex = typeof raw.activeIndex === 'number' ? raw.activeIndex : 0
+    if (activeIndex < 0 || activeIndex >= accounts.length) activeIndex = 0
+    return { accounts, activeIndex }
   }
 
-  if (raw.account) {
-    if (!raw.account.meta) raw.account.meta = { online: false, type: 'azuriom', url: AZURIOM_URL }
-    return { account: raw.account, savedAt: raw.savedAt ?? new Date().toISOString() }
-  }
-
-  if ('accessToken' in raw && 'name' in raw && 'uuid' in raw) {
-    const account = raw as unknown as Account
-    if (!account.meta) account.meta = { online: false, type: 'azuriom', url: AZURIOM_URL }
-    return { account, savedAt: new Date().toISOString() }
+  // Legacy single-account format
+  const single = normalizeAccount(raw)
+  if (single) {
+    return { accounts: [{ account: single, savedAt: raw.savedAt ?? new Date().toISOString() }], activeIndex: 0 }
   }
 
   return null
 }
 
-function saveSession(account: Account) {
-  const sessionData: StoredSession = { account, savedAt: new Date().toISOString() }
-  const json = JSON.stringify(sessionData)
+function saveSessionData(data: SessionData) {
+  const json = JSON.stringify(data)
   let payload = json
   let encrypted = false
   if (safeStorage.isEncryptionAvailable()) {
@@ -172,26 +190,28 @@ function saveSession(account: Account) {
       encrypted = false
     }
   }
-  const wrapper: SessionFile = { v: 2, encrypted, payload }
+  const wrapper: SessionFile = { v: 3, encrypted, payload }
   fs.writeFileSync(sessionPath, JSON.stringify(wrapper, null, 2))
-  logger.log(`Session saved for ${account.name}`)
+  logger.log(`Session saved (${data.accounts.length} account(s))`)
 }
 
-function loadSession(): StoredSession | null {
+function loadSessionData(): SessionData | null {
   if (!fs.existsSync(sessionPath)) return null
   try {
     const raw = fs.readFileSync(sessionPath, 'utf-8')
-    const parsed = normalizeSession(JSON.parse(raw))
+    const parsed = normalizeSessionData(JSON.parse(raw))
     if (!parsed) {
       logger.warn('Session file exists but could not be parsed')
       return null
     }
-    if (!parsed.account?.accessToken) {
-      logger.warn('Session has no access token, clearing')
+    // Remove accounts without token
+    parsed.accounts = parsed.accounts.filter((a) => a.account?.accessToken)
+    if (parsed.accounts.length === 0) {
       try { fs.unlinkSync(sessionPath) } catch {}
       return null
     }
-    logger.log(`Session loaded for ${parsed.account.name}`)
+    if (parsed.activeIndex >= parsed.accounts.length) parsed.activeIndex = 0
+    logger.log(`Session loaded: ${parsed.accounts.length} account(s), active=${parsed.accounts[parsed.activeIndex].account.name}`)
     return parsed
   } catch (err) {
     logger.error('Failed to load session:', err)
@@ -200,38 +220,93 @@ function loadSession(): StoredSession | null {
 }
 
 export function registerAuthHandlers(_mainWindow: Electron.BrowserWindow) {
-  const save = saveSession
-  const load = loadSession
+  let sessionData: SessionData | null = loadSessionData()
+
+  const persist = () => {
+    if (sessionData) saveSessionData(sessionData)
+  }
+
+  ipcMain.handle('auth:accounts', async () => {
+    if (!sessionData) return []
+    return sessionData.accounts.map((a, i) => ({
+      name: a.account.name,
+      uuid: a.account.uuid,
+      role: a.account.userProperties?.role,
+      active: i === sessionData!.activeIndex
+    }))
+  })
+
+  ipcMain.handle('auth:switch', async (_event, index: number) => {
+    if (!sessionData) return { success: false, error: 'No session' }
+    if (index < 0 || index >= sessionData.accounts.length) return { success: false, error: 'Invalid index' }
+    sessionData.activeIndex = index
+    persist()
+    logger.log(`Switched to account ${sessionData.accounts[index].account.name}`)
+    return { success: true, account: sessionData.accounts[index].account }
+  })
+
+  ipcMain.handle('auth:remove', async (_event, index: number) => {
+    if (!sessionData) return { success: false, error: 'No session' }
+    if (index < 0 || index >= sessionData.accounts.length) return { success: false, error: 'Invalid index' }
+    const removed = sessionData.accounts.splice(index, 1)[0]
+    if (sessionData.accounts.length === 0) {
+      sessionData = null
+      try { if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath) } catch {}
+    } else {
+      if (sessionData.activeIndex >= sessionData.accounts.length) sessionData.activeIndex = 0
+      persist()
+    }
+    logger.log(`Removed account ${removed.account.name}`)
+    return { success: true }
+  })
 
   ipcMain.handle('auth:refresh', async () => {
-    const session = load()
-    if (!session) {
+    if (!sessionData || sessionData.accounts.length === 0) {
       return { success: false } as { success: false }
     }
-
+    const active = sessionData.accounts[sessionData.activeIndex]
     try {
-      const verified = await azVerify(session.account)
-      save(verified)
+      const verified = await azVerify(active.account)
+      active.account = verified
+      active.savedAt = new Date().toISOString()
+      persist()
       return { success: true, account: verified } as IAuthResponse
     } catch (err: any) {
       const msg = err?.message ?? String(err)
       logger.error('Failed to refresh session:', msg)
-      // Clear session only for auth failures; keep for transient errors
       if (/invalid|banned|401|403|422/i.test(msg)) {
-        try { if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath) } catch {}
+        sessionData.accounts.splice(sessionData.activeIndex, 1)
+        if (sessionData.accounts.length === 0) {
+          sessionData = null
+          try { if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath) } catch {}
+        } else {
+          if (sessionData.activeIndex >= sessionData.accounts.length) sessionData.activeIndex = 0
+          persist()
+        }
         return { success: false, error: msg }
       }
-      // Transient/network error: return cached account to keep session alive
-      return { success: true, account: session.account } as IAuthResponse
+      return { success: true, account: active.account } as IAuthResponse
     }
   })
 
   ipcMain.handle('auth:logout', async (_event, account?: Account) => {
-    const session = load()
-    const target = account ?? session?.account
-    if (target) await azLogout(target)
-    if (fs.existsSync(sessionPath)) {
-      try { fs.unlinkSync(sessionPath) } catch {}
+    if (account && sessionData) {
+      const idx = sessionData.accounts.findIndex((a) => a.account.name === account.name)
+      if (idx !== -1) {
+        await azLogout(sessionData.accounts[idx].account)
+        sessionData.accounts.splice(idx, 1)
+        if (sessionData.accounts.length === 0) {
+          sessionData = null
+          try { if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath) } catch {}
+        } else {
+          if (sessionData.activeIndex >= sessionData.accounts.length) sessionData.activeIndex = 0
+          persist()
+        }
+      }
+    } else if (sessionData) {
+      await azLogout(sessionData.accounts[sessionData.activeIndex].account)
+      sessionData = null
+      try { if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath) } catch {}
     }
     logger.log('Session cleared')
     return { success: true }
@@ -244,7 +319,17 @@ export function registerAuthHandlers(_mainWindow: Electron.BrowserWindow) {
       }
       logger.log(`Attempting Azuriom login for ${payload.username}...`)
       const account = await azAuth(payload.username, payload.password, payload.twoFACode)
-      save(account)
+      if (!sessionData) sessionData = { accounts: [], activeIndex: 0 }
+      const existing = sessionData.accounts.findIndex((a) => a.account.name.toLowerCase() === account.name.toLowerCase())
+      if (existing !== -1) {
+        sessionData.accounts[existing].account = account
+        sessionData.accounts[existing].savedAt = new Date().toISOString()
+        sessionData.activeIndex = existing
+      } else {
+        sessionData.accounts.push({ account, savedAt: new Date().toISOString() })
+        sessionData.activeIndex = sessionData.accounts.length - 1
+      }
+      persist()
       logger.log('Azuriom login successful')
       return { success: true, account } as IAuthResponse
     } catch (err: any) {

@@ -1,4 +1,5 @@
 import logger from 'electron-log/renderer'
+import { t } from '../i18n'
 
 export type ButtonType = 'ok' | 'cancel' | 'danger' | 'other'
 
@@ -34,8 +35,8 @@ class DialogSystem {
       }
 
       const configButtons = buttons ?? [
-        { text: 'Cancel', type: 'cancel' },
-        { text: 'OK', type: 'ok' }
+        { text: t('common.cancel'), type: 'cancel' },
+        { text: t('common.ok'), type: 'ok' }
       ]
 
       configButtons.forEach((btnConfig) => {
@@ -82,7 +83,7 @@ class DialogSystem {
       this.titleEl.classList.remove('hidden')
 
       const okBtn = document.createElement('button')
-      okBtn.innerText = 'OK'
+      okBtn.innerText = t('common.ok')
       okBtn.className = 'btn btn-secondary'
       okBtn.onclick = () => {
         const input = document.getElementById('dialog-input') as HTMLInputElement
@@ -91,7 +92,7 @@ class DialogSystem {
       }
 
       const cancelBtn = document.createElement('button')
-      cancelBtn.innerText = 'Cancel'
+      cancelBtn.innerText = t('common.cancel')
       cancelBtn.className = 'btn btn-secondary'
       cancelBtn.onclick = () => {
         this.close()

@@ -48,7 +48,10 @@ const rendererApi = {
     loginAz: (payload: { username: string; password: string; twoFACode?: string }): Promise<IAuthResponse> =>
       ipcRenderer.invoke('auth:login-az', payload),
     refresh: (): Promise<IAuthResponse> => ipcRenderer.invoke('auth:refresh'),
-    logout: (account?: Account): Promise<{ success: boolean }> => ipcRenderer.invoke('auth:logout', account)
+    logout: (account?: Account): Promise<{ success: boolean }> => ipcRenderer.invoke('auth:logout', account),
+    accounts: (): Promise<{ name: string; uuid: string; role?: string; active: boolean }[]> => ipcRenderer.invoke('auth:accounts'),
+    switch: (index: number): Promise<IAuthResponse | { success: false; error: string }> => ipcRenderer.invoke('auth:switch', index),
+    remove: (index: number): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('auth:remove', index)
   },
 
   profiles: {
@@ -137,7 +140,9 @@ const rendererApi = {
   },
 
   system: {
-    getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info')
+    getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info'),
+    openLogs: (): Promise<boolean> => ipcRenderer.invoke('system:open_logs'),
+    repairGame: (): Promise<{ success: boolean; deleted?: number; root?: string; error?: string }> => ipcRenderer.invoke('system:repair_game')
   },
 
   crash: {

@@ -27,6 +27,9 @@ declare global {
         loginAz: (payload: { username: string; password: string; twoFACode?: string }) => Promise<IAuthResponse>
         refresh: () => Promise<IAuthResponse>
         logout: (account?: Account) => Promise<{ success: boolean }>
+        accounts: () => Promise<{ name: string; uuid: string; role?: string; active: boolean }[]>
+        switch: (index: number) => Promise<IAuthResponse | { success: false; error: string }>
+        remove: (index: number) => Promise<{ success: boolean; error?: string }>
       }
       skin: {
         reload: (account?: Account) => Promise<void | null>
@@ -125,6 +128,8 @@ declare global {
       }
       system: {
         getInfo: () => Promise<ISystemInfo>
+        openLogs: () => Promise<boolean>
+        repairGame: () => Promise<{ success: boolean; deleted?: number; root?: string; error?: string }>
       }
     }
   }
@@ -133,7 +138,10 @@ declare global {
 export const auth = {
   loginAz: async (payload: { username: string; password: string; twoFACode?: string }) => await window.api.auth.loginAz(payload),
   logout: async (account?: Account) => await window.api.auth.logout(account),
-  refresh: async () => await window.api.auth.refresh()
+  refresh: async () => await window.api.auth.refresh(),
+  accounts: async () => await window.api.auth.accounts(),
+  switch: async (index: number) => await window.api.auth.switch(index),
+  remove: async (index: number) => await window.api.auth.remove(index)
 }
 
 export const skin = {
@@ -231,7 +239,9 @@ export const settings = {
 }
 
 export const system = {
-  getInfo: () => window.api.system.getInfo()
+  getInfo: () => window.api.system.getInfo(),
+  openLogs: () => window.api.system.openLogs(),
+  repairGame: () => window.api.system.repairGame()
 }
 
 export const crash = {

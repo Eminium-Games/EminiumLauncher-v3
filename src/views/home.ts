@@ -47,6 +47,7 @@ export function initHome() {
   const profileSelector = document.getElementById('profile-selector')
   const profileDropdown = document.getElementById('profile-dropdown')
   const currentProfileName = document.getElementById('current-profile-name')
+  if (currentProfileName) currentProfileName.textContent = t('home.select_profile')
 
   let selectedProfile: any = null
   let allProfiles: any[] = []

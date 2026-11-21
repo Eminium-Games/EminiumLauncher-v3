@@ -27,6 +27,7 @@
   "maintenance.not_allowed": "{name} n'est pas autorisé à contourner la maintenance",
 
   "home.play": "JOUER",
+  "home.select_profile": "Sélectionner un profil",
   "home.news": "Actualités",
   "home.preparing_download": "Préparation du téléchargement...",
   "home.downloading_files": "Téléchargement des fichiers...",
@@ -65,6 +66,9 @@
   "settings.logout": "Se déconnecter",
   "settings.launcher_updates": "Mises à jour du launcher",
   "settings.check_updates": "Vérifier les mises à jour",
+  "settings.open_logs": "Ouvrir les logs",
+  "settings.repair_game": "Réparer les fichiers du jeu",
+  "settings.ram_auto": "Auto",
   "settings.up_to_date": "Vous êtes à jour.",
   "settings.offline": "Impossible de contacter GitHub, vérifiez votre connexion.",
   "settings.build_pending": "La CI n'a pas encore compilé ce commit, réessayez plus tard.",
