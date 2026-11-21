@@ -121,10 +121,15 @@ export async function resolvePatchedJava(): Promise<JavaCandidate | null> {
   const candidates = [...found.values()].filter(isPatchedEnough)
   if (candidates.length === 0) return null
 
-  // Prefer Java 17+ (needed for modern Minecraft), then highest version.
+  // Prefer Java 17 specifically (the patched runtime we install), then other
+  // 17+ runtimes, then highest version.
   const scored = candidates.map((c) => {
     const major = parseInt(c.version.split('.')[0], 10) || 0
-    const score = (major >= 17 ? 1000 : 0) + major * 10 + (c.arch.includes('64') ? 5 : 0)
+    const score =
+      (major === 17 ? 2000 : 0) +
+      (major >= 17 ? 1000 : 0) +
+      major * 10 +
+      (c.arch.includes('64') ? 5 : 0)
     return { c, score }
   })
   scored.sort((a, b) => b.score - a.score)

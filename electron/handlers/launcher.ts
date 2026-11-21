@@ -21,21 +21,23 @@ export function registerLauncherHandlers(mainWindow: BrowserWindow) {
     const java = settings.java === 'system' ? { install: 'manual' as const, absolutePath: 'java' } : { install: 'auto' as const }
     logger.log('Launching')
 
-    // Force l'usage d'un Java système patché si disponible (CVE-2026-114938).
+    // Force l'usage d'un Java système patché si disponible (CVE-2026-114938),
+    // uniquement si l'utilisateur a choisi "system" pour ne pas casser les
+    // anciennes versions de Minecraft qui nécessitent Java 8.
     let resolvedJava = java
-    try {
-      const patched = await resolvePatchedJava()
-      if (patched) {
-        const major = parseInt(patched.version.split('.')[0], 10) || 0
-        if (major >= 17) {
-          resolvedJava = { install: 'manual' as const, absolutePath: patched.path }
-          logger.log(`Forcing patched system Java: ${patched.path} (${patched.version})`)
-        } else {
-          logger.log(`System Java ${patched.version} too old for modern Minecraft, keeping bundled (mitigated)`)
+    if (settings.java === 'system') {
+      try {
+        const patched = await resolvePatchedJava()
+        if (patched) {
+          const major = parseInt(patched.version.split('.')[0], 10) || 0
+          if (major >= 17) {
+            resolvedJava = { install: 'manual' as const, absolutePath: patched.path }
+            logger.log(`Forcing patched system Java: ${patched.path} (${patched.version})`)
+          }
         }
+      } catch (err) {
+        logger.error('resolvePatchedJava failed, falling back to configured Java:', err)
       }
-    } catch (err) {
-      logger.error('resolvePatchedJava failed, falling back to configured Java:', err)
     }
 
     // Mitigation CVE-2026-114938 ("Java4Shell") : corruption mémoire dans le
