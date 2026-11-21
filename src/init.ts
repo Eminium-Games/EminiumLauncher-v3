@@ -3,6 +3,7 @@ import { auth, background, maintenance, skin, updater } from './ipc'
 import { showMaintenanceProfile } from './views/maintenance-login'
 import logger from 'electron-log/renderer'
 import type { UpdaterProgress } from '../electron/handlers/updater'
+import { t } from './i18n'
 
 const DEFAULT_BACKGROUND = '/src/static/images/bg.png'
 const dateFormatOptions: Intl.DateTimeFormatOptions = {
@@ -33,6 +34,10 @@ function getUpdateView() {
 
 function showUpdateView(text: string) {
   const { bar, label, percent } = getUpdateView()
+  const title = document.getElementById('update-title')
+  if (title) title.innerText = t('update.available')
+  const updateText = document.getElementById('update-text')
+  if (updateText) updateText.innerText = t('update.wait')
   if (bar) {
     bar.classList.remove('indeterminate')
     bar.style.width = '0%'
@@ -76,7 +81,7 @@ async function applyLauncherUpdate(): Promise<boolean> {
   }
 
   logger.log(`Update found: ${check.current.slice(0, 7)} -> ${check.latest.slice(0, 7)} (mode: ${check.mode})`)
-  showUpdateView(check.mode === 'dev' ? 'Updating from git...' : 'Downloading launcher update...')
+  showUpdateView(check.mode === 'dev' ? t('update.installing') : t('update.downloading'))
 
   const offProgress = updater.onProgress((p) => {
     // renderUpdateProgress(p, check.mode === 'dev' ? 'Updating...' : 'Downloading update...')
@@ -86,7 +91,7 @@ async function applyLauncherUpdate(): Promise<boolean> {
   try {
     const installerPath = await updater.download()
     const { label } = getUpdateView()
-    if (label) label.innerText = 'Installing update, the launcher will restart...'
+    if (label) label.innerText = t('update.installing')
     await updater.install(installerPath ?? undefined)
     return true
   } catch (err) {
@@ -139,8 +144,8 @@ export async function bootstrap() {
   if (mn && !mn.canBypass) {
     const start = new Date(mn.startTime as Date)
     const end = new Date(mn.endTime as Date)
-    maintenanceDates.innerText = `From ${start.toLocaleString([], dateFormatOptions)} to ${end.toLocaleString([], dateFormatOptions)}`
-    maintenanceReason.innerText = mn.message ?? 'Please come back later.'
+    maintenanceDates.innerText = t('maintenance.from_to', { start: start.toLocaleString([], dateFormatOptions), end: end.toLocaleString([], dateFormatOptions) })
+    maintenanceReason.innerText = mn.message ?? t('maintenance.reason_default')
     // A logged-in (but not whitelisted) player sees their profile capsule,
     // with a logout option to retry with another account.
     if (session && session.success) showMaintenanceProfile(session.account)

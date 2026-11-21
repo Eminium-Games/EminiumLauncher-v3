@@ -85,7 +85,7 @@
       </div>
       <div class="maintenance-card">
         <p class="gears"><i class="fa-solid fa-gears"></i></p>
-        <h3>Maintenance</h3>
+        <h3 id="maintenance-title">Maintenance</h3>
         <p class="dates" id="maintenance-dates"></p>
         <p class="text" id="maintenance-reason"></p>
       </div>
@@ -94,7 +94,7 @@
     <div id="view-update" class="update" data-view="update">
       <div class="maintenance-card">
         <p class="up"><i class="fa-solid fa-circle-up"></i></p>
-        <h3>An update is available</h3>
+        <h3 id="update-title">An update is available</h3>
         <p class="text" id="update-text">Please wait while we update your launcher...</p>
         <div class="progress-container" id="update-progress-container">
           <div class="progress-info">
@@ -208,7 +208,7 @@
 
         <main class="home-content">
           <div class="news-header">
-            <h2>Actualités</h2>
+            <h2 id="news-title">Actualités</h2>
             <div class="social-links">
               <a href="https://discord.gg/TejWuG3fDk" target="_blank" class="btn btn-icon-only"><i class="fa-brands fa-discord"></i></a>
               <a href="https://eminium.ovh" target="_blank" class="btn btn-icon-only"><i class="fa-solid fa-globe"></i></a>
@@ -244,7 +244,7 @@
 
           <main class="settings-content" id="settings-content">
             <section id="tab-game" class="tab-content active">
-              <h3>Minecraft configuration</h3>
+              <h3 id="tab-game-title">Minecraft configuration</h3>
 
               <div class="setting-group">
                 <label><i class="fa-fw fa-solid fa-memory"></i>&nbsp;&nbsp;Allocated RAM</label>
@@ -340,8 +340,8 @@
             </section>
 
             <section id="tab-patch" class="tab-content">
-              <h3>Java4Shell patch (CVE-2026-114938)</h3>
-              <p style="margin-bottom:1rem;opacity:0.85;">
+              <h3 id="patch-title">Java4Shell patch (CVE-2026-114938)</h3>
+              <p id="patch-desc" style="margin-bottom:1rem;opacity:0.85;">
                 CVE-2026-114938 ("Java4Shell") is a memory corruption in OpenJDK's
                 hardware-accelerated Base64 decoder (AVX-512 VBMI), affecting Java 17.0.6+,
                 21, 25 and 27 on x86-64. The launcher already applies the mitigation
@@ -358,7 +358,7 @@
             </section>
 
             <section id="tab-account" class="tab-content">
-              <h3>Account management</h3>
+              <h3 id="tab-account-title">Account management</h3>
 
               <div class="account-card">
                 <div class="account-header">
@@ -392,7 +392,7 @@
             </section>
 
             <section id="tab-privacy" class="tab-content">
-              <h3>Privacy</h3>
+              <h3 id="tab-privacy-title">Privacy</h3>
 
               <div class="setting-group">
                 <label class="privacy-option">

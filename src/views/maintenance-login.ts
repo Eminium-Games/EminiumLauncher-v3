@@ -4,6 +4,7 @@ import { enterWithAccount, requestEminiumLogin } from './login'
 import { Dialog } from './dialog'
 import logger from 'electron-log/renderer'
 import type { Account } from 'eml-lib'
+import { t } from '../i18n'
 
 function setCapsule(account: Account | null) {
   const btnAdmin = document.getElementById('btn-maintenance-login')
@@ -36,6 +37,13 @@ export function initMaintenanceLogin() {
   const capsule = document.getElementById('maintenance-profile')
   if (!btnAdmin || !capsule) return
 
+  const maintenanceTitle = document.getElementById('maintenance-title')
+  if (maintenanceTitle) maintenanceTitle.textContent = t('maintenance.title')
+
+  // Translate the admin button label (contains an icon span)
+  const adminLabel = btnAdmin.querySelector('span')
+  if (adminLabel) adminLabel.textContent = t('maintenance.admin_button')
+
   btnAdmin.addEventListener('click', async () => {
     btnAdmin.disabled = true
 
@@ -67,7 +75,7 @@ export function initMaintenanceLogin() {
   })
 
   capsule.addEventListener('click', async () => {
-    if (await Dialog.show('Log out?', [{ text: 'Cancel', type: 'cancel' }, { text: 'Logout', type: 'danger' }])) {
+    if (await Dialog.show(t('maintenance.logout'), [{ text: t('common.cancel'), type: 'cancel' }, { text: t('common.logout') ?? 'Logout', type: 'danger' }])) {
       await auth.logout()
       logout()
       setCapsule(null)

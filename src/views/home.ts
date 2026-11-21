@@ -4,6 +4,7 @@ import { Dialog } from './dialog'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import logger from 'electron-log/renderer'
+import { t } from '../i18n'
 
 marked.use({
   renderer: {
@@ -31,6 +32,7 @@ const escapeHtml = (text: string) =>
 export function initHome() {
   const body = document.body
   const playBtn = document.getElementById('btn-play')
+  if (playBtn) playBtn.textContent = t('home.play')
   const settingsBtn = document.getElementById('btn-settings')
   const progressContainer = document.getElementById('launch-progress-container')
   const progressBar = document.getElementById('launch-progress-bar')
@@ -40,6 +42,8 @@ export function initHome() {
   const statusText = document.getElementById('server-status-text')
   const playerCount = document.getElementById('player-count')
   const newsList = document.getElementById('news-list')
+  const newsTitle = document.getElementById('news-title')
+  if (newsTitle) newsTitle.textContent = t('home.news')
   const profileSelector = document.getElementById('profile-selector')
   const profileDropdown = document.getElementById('profile-dropdown')
   const currentProfileName = document.getElementById('current-profile-name')
@@ -98,7 +102,7 @@ export function initHome() {
       statusDot.classList.remove('online', 'offline')
       statusDot.classList.add('pinging')
     }
-    if (statusText) statusText.innerHTML = 'Pinging...'
+    if (statusText) statusText.innerHTML = t('home.pinging')
     if (playerCount) playerCount.innerHTML = ''
 
     let status = null
@@ -114,7 +118,7 @@ export function initHome() {
         statusDot.classList.remove('pinging', 'offline')
         statusDot.classList.add('online')
       }
-      if (statusText) statusText.innerHTML = 'Online'
+      if (statusText) statusText.innerHTML = t('home.online')
 
       if (playerCount) {
         playerCount.innerHTML = `<i class="fa-fw fa-solid fa-users"></i>&nbsp;&nbsp;${status.players.online.toLocaleString()} / ${status.players.max.toLocaleString()}`
@@ -124,28 +128,28 @@ export function initHome() {
         statusDot.classList.remove('pinging', 'online')
         statusDot.classList.add('offline')
       }
-      if (statusText) statusText.innerHTML = 'Offline'
+      if (statusText) statusText.innerHTML = t('home.offline')
       if (playerCount) playerCount.innerHTML = ''
     }
   }
 
   const loadNews = async () => {
     if (!newsList) return
-    newsList.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">Loading news...</div>'
+    newsList.innerHTML = '<div style="text-align:center; padding: 20px; color: #888;">' + t('home.loading_news') + '</div>'
     let feed
     try {
       feed = await news.getNews()
       logger.log(`News loaded: ${feed?.length ?? 0} items`)
     } catch (err) {
       logger.error('Failed to load news:', err)
-      newsList.innerHTML = '<div style="text-align:center; color: #888;">No news available.</div>'
+      newsList.innerHTML = '<div style="text-align:center; color: #888;">' + t('home.no_news') + '</div>'
       return
     }
 
     newsList.innerHTML = ''
 
     if (!feed || feed.length === 0) {
-      newsList.innerHTML = '<div style="text-align:center; color: #888;">No news available.</div>'
+      newsList.innerHTML = '<div style="text-align:center; color: #888;">' + t('home.no_news') + '</div>'
       return
     }
 
@@ -244,7 +248,7 @@ Ready to launch the game with the following settings:
 
   game.launchComputeDownload(() => {
     setIndeterminate(true)
-    if (progressLabel) progressLabel.innerText = 'Preparing download...'
+    if (progressLabel) progressLabel.innerText = t('home.preparing_download')
     if (progressPercent) progressPercent.innerText = ''
   })
   game.launchDownload((download) => {
@@ -267,24 +271,24 @@ Ready to launch the game with the following settings:
   })
   game.launchInstallLoader(() => {
     setIndeterminate(true)
-    if (progressLabel) progressLabel.innerText = 'Extracting files...'
+    if (progressLabel) progressLabel.innerText = t('home.extracting')
     if (progressPercent) progressPercent.innerText = ''
   })
   game.launchExtractNatives(() => {
     setIndeterminate(true)
-    if (progressLabel) progressLabel.innerText = 'Extracting files...'
+    if (progressLabel) progressLabel.innerText = t('home.extracting')
   })
   game.launchCopyAssets(() => {
     setIndeterminate(true)
-    if (progressLabel) progressLabel.innerText = 'Extracting files...'
+    if (progressLabel) progressLabel.innerText = t('home.extracting')
   })
   game.launchPatchLoader(() => {
     setIndeterminate(true)
-    if (progressLabel) progressLabel.innerText = 'Finalizing setup...'
+    if (progressLabel) progressLabel.innerText = t('home.finalizing')
   })
   game.launchLaunch(() => {
     setIndeterminate(true)
-    if (progressLabel) progressLabel.innerText = 'Launching game...'
+    if (progressLabel) progressLabel.innerText = t('home.launching')
   })
   game.launched(() => {
     setTimeout(() => {
@@ -303,17 +307,17 @@ Ready to launch the game with the following settings:
   })
   game.crashReportResult(async ({ sent }) => {
     if (sent) {
-      await Dialog.show('The game crashed. An anonymous crash report was sent to help fix the issue.', [{ text: 'OK', type: 'ok' }], 'Game crashed')
+      await Dialog.show(t('dialog.crash_sent'), [{ text: t('common.ok'), type: 'ok' }], t('dialog.crash_title'))
       return
     }
     const choice = await Dialog.show<string>(
-      'The game crashed. Send an anonymous crash report to help fix the issue? Usernames and tokens are automatically hidden.',
+      t('dialog.crash_prompt'),
       [
-        { text: "Don't send", type: 'cancel' },
-        { text: 'Always send', type: 'other', action: async () => 'always' },
-        { text: 'Send once', type: 'ok', action: async () => 'once' }
+        { text: t('dialog.dont_send'), type: 'cancel' },
+        { text: t('dialog.always_send'), type: 'other', action: async () => 'always' },
+        { text: t('dialog.send_once'), type: 'ok', action: async () => 'once' }
       ],
-      'Game crashed'
+      t('dialog.crash_title')
     )
     if (choice === 'always') {
       const config = await settings.get()

@@ -3,6 +3,7 @@ import { auth, skin } from '../ipc'
 import { Dialog } from './dialog'
 import logger from 'electron-log/renderer'
 import type { Account } from 'eml-lib'
+import { t } from '../i18n'
 
 /** Prompt for credentials and authenticate. Returns the account, or null if cancelled/failed. */
 export async function requestEminiumLogin(): Promise<Account | null> {
@@ -41,11 +42,16 @@ export function initLogin() {
   const btnEm = document.getElementById('btn-login-em') as HTMLButtonElement | null
   if (!btnEm) return
 
+  const welcome = document.querySelector('#view-login h2')
+  if (welcome) welcome.textContent = t('login.welcome')
+  const btnLabel = btnEm.querySelector('span')
+  if (btnLabel) btnLabel.textContent = t('login.connect')
+
   btnEm.addEventListener('click', async () => {
     const originalText = btnEm.innerHTML
 
     btnEm.disabled = true
-    btnEm.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Connecting...'
+    btnEm.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ' + t('common.connecting')
 
     try {
       const account = await requestEminiumLogin()

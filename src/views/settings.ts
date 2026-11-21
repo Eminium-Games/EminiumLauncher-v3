@@ -4,6 +4,7 @@ import { Dialog } from './dialog'
 import logger from 'electron-log/renderer'
 import type { IGameSettings } from '../../electron/handlers/settings'
 import shared from '../shared'
+import { t } from '../i18n'
 
 const resolutionList = [
   { label: 'Auto (default)', value: '854x480', width: 854, height: 480 },
@@ -28,20 +29,51 @@ export async function initSettings() {
   initDualSlider(sysInfo.totalMem)
   initFormValues(sysInfo.resolution)
 
+  // Traduction i18n des libellés statiques
+  const navGame = document.querySelector('.nav-btn[data-tab="game"] span')
+  const navAccount = document.querySelector('.nav-btn[data-tab="account"] span')
+  const navPrivacy = document.querySelector('.nav-btn[data-tab="privacy"] span')
+  const navPatch = document.querySelector('.nav-btn[data-tab="patch"] span')
+  if (navGame) navGame.textContent = t('settings.tab_game')
+  if (navAccount) navAccount.textContent = t('settings.tab_account')
+  if (navPrivacy) navPrivacy.textContent = t('settings.tab_privacy')
+  if (navPatch) navPatch.textContent = t('settings.tab_patch')
+
+  const javaSelectEl = document.getElementById('java-select') as HTMLSelectElement | null
+  if (javaSelectEl) {
+    const optBundled = javaSelectEl.querySelector('option[value="bundled"]')
+    const optSystem = javaSelectEl.querySelector('option[value="system"]')
+    if (optBundled) optBundled.textContent = t('settings.java_bundled')
+    if (optSystem) optSystem.textContent = t('settings.java_system')
+  }
+
+  const patchTitle = document.getElementById('patch-title')
+  if (patchTitle) patchTitle.textContent = t('patch.title')
+
+  const tabGameTitle = document.getElementById('tab-game-title')
+  const tabAccountTitle = document.getElementById('tab-account-title')
+  const tabPrivacyTitle = document.getElementById('tab-privacy-title')
+  if (tabGameTitle) tabGameTitle.textContent = t('settings.section_game')
+  if (tabAccountTitle) tabAccountTitle.textContent = t('settings.section_account')
+  if (tabPrivacyTitle) tabPrivacyTitle.textContent = t('settings.section_privacy')
+  const patchDesc = document.getElementById('patch-desc')
+  if (patchTitle) patchTitle.textContent = t('patch.title')
+  if (patchDesc) patchDesc.textContent = t('patch.description')
   const installPatchedJavaBtn = document.getElementById('btn-install-patched-java') as HTMLButtonElement | null
   const installPatchedJavaStatus = document.getElementById('install-patched-java-status')
+  if (installPatchedJavaBtn) installPatchedJavaBtn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
 
   installPatchedJavaBtn?.addEventListener('click', async () => {
     if (installPatchedJavaBtn) installPatchedJavaBtn.disabled = true
-    if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = 'Downloading patched Java 17 (this may take a few minutes)...'
+    if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.installing')
     try {
       const path = await settings.installPatchedJava17()
       if (path) {
         if (installPatchedJavaBtn) installPatchedJavaBtn.style.display = 'none'
-        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = `Installed: ${path}`
+        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.installed', { path })
         await Dialog.show('Patched Java 17 installed. Select "Use system Java (PATH)" or restart to use it.', [{ text: 'OK', type: 'ok' }])
       } else {
-        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = 'Installation failed. See logs.'
+        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.failed')
       }
     } catch (err) {
       logger.error('installPatchedJava17 failed:', err)
@@ -55,13 +87,13 @@ export async function initSettings() {
     const resolved = await settings.resolveJava()
     if (resolved && parseInt(resolved.version.split('.')[0], 10) >= 17) {
       if (installPatchedJavaBtn) installPatchedJavaBtn.style.display = 'none'
-      if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = `Patched Java already available: ${resolved.version} (${resolved.path})`
+      if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.available', { version: resolved.version, path: resolved.path })
     }
   } catch (err) {
     logger.error('resolveJava check failed:', err)
   }
   const versionElem = document.getElementById('version')
-  if (versionElem) versionElem.innerText = `Version ${sysInfo.version}`
+  if (versionElem) versionElem.innerText = t('settings.version', { version: sysInfo.version })
 
   const commitElem = document.getElementById('launcher-commit')
   const checkUpdatesBtn = document.getElementById('btn-check-updates') as HTMLButtonElement | null
@@ -73,7 +105,7 @@ export async function initSettings() {
 
   try {
     const info = await updater.getInfo()
-    if (commitElem) commitElem.innerText = `Commit ${info.current.slice(0, 7)} (${info.mode === 'dev' ? 'dev' : 'prod'})`
+    if (commitElem) commitElem.innerText = t('settings.commit', { commit: info.current.slice(0, 7), mode: info.mode === 'dev' ? 'dev' : 'prod' })
   } catch {
     if (commitElem) commitElem.innerText = ''
   }

@@ -14,6 +14,7 @@ export interface ISystemInfo {
     height: number
   }
   version: string
+  locale: string
 }
 
 export interface ITelemetrySettings {
@@ -107,7 +108,8 @@ export function registerSettingsHandlers() {
     return {
       totalMem: totalMemGB,
       resolution: { width, height },
-      version: app.getVersion()
+      version: app.getVersion(),
+      locale: app.getLocale()
     }
   })
 

@@ -13,11 +13,13 @@ import { initHome } from './views/home'
 import { initMaintenanceLogin } from './views/maintenance-login'
 import { initSettings } from './views/settings'
 import { bootstrap } from './init'
+import { initI18n } from './i18n'
 
-initLogin()
-initHome()
-initMaintenanceLogin()
-initSettings()
-
-bootstrap()
+initI18n().then(() => {
+  initLogin()
+  initHome()
+  initMaintenanceLogin()
+  initSettings()
+  bootstrap()
+})
 
