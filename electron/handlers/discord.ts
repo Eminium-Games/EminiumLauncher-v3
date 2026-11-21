@@ -4,6 +4,10 @@ let rpc: any = null
 let ready = false
 
 export async function initDiscordRPC(clientId: string): Promise<void> {
+  if (!clientId) {
+    logger.warn('Discord RPC disabled: no client ID configured')
+    return
+  }
   try {
     const DiscordRPC = require('discord-rpc')
     DiscordRPC.register(clientId)
@@ -11,31 +15,46 @@ export async function initDiscordRPC(clientId: string): Promise<void> {
     rpc.on('ready', () => {
       ready = true
       logger.log('Discord RPC ready')
-      setActivity({ state: 'In the launcher', details: 'Browsing' })
+      setTimeout(() => {
+        setActivity({ state: 'In the launcher', details: 'Browsing' })
+      }, 1000)
     })
     rpc.on('disconnected', () => {
       ready = false
-      logger.log('Discord RPC disconnected')
+      logger.warn('Discord RPC disconnected')
+    })
+    rpc.on('error', (err: any) => {
+      logger.error('Discord RPC error:', err)
     })
     await rpc.login({ clientId })
-  } catch (err) {
-    logger.warn('Discord RPC init failed (Discord not running?):', err)
+    logger.log('Discord RPC login resolved')
+  } catch (err: any) {
+    logger.error('Discord RPC init failed:', err?.message ?? err, err?.stack)
+    rpc = null
+    ready = false
   }
 }
 
 export function setActivity(activity: { state?: string; details?: string; largeImageKey?: string; largeImageText?: string }): void {
-  if (!rpc || !ready) return
+  if (!rpc || !ready) {
+    logger.warn('Discord setActivity skipped: rpc not ready')
+    return
+  }
   try {
-    rpc.setActivity({
+    const payload: any = {
       state: activity.state,
       details: activity.details,
-      largeImageKey: activity.largeImageKey ?? 'logo',
-      largeImageText: activity.largeImageText ?? 'Eminium Games Launcher',
-      startTimestamp: Date.now(),
       instance: false
-    })
-  } catch (err) {
-    logger.warn('Discord setActivity failed:', err)
+    }
+    if (activity.largeImageKey) {
+      payload.largeImageKey = activity.largeImageKey
+      payload.largeImageText = activity.largeImageText
+    }
+    payload.startTimestamp = Date.now()
+    rpc.setActivity(payload)
+    logger.log('Discord activity set:', JSON.stringify(payload))
+  } catch (err: any) {
+    logger.error('Discord setActivity failed:', err?.message ?? err)
   }
 }
 
@@ -43,7 +62,7 @@ export function clearActivity(): void {
   if (!rpc || !ready) return
   try {
     rpc.clearActivity()
-  } catch (err) {
-    logger.warn('Discord clearActivity failed:', err)
+  } catch (err: any) {
+    logger.warn('Discord clearActivity failed:', err?.message ?? err)
   }
 }

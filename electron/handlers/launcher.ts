@@ -188,7 +188,7 @@ export function registerLauncherHandlers(mainWindow: BrowserWindow) {
     launcher.on('launch_launch', (info) => {
       logger.log(`Launching Minecraft ${info.minecraft?.version ?? '?'} (${info.minecraft?.loader?.loader ?? 'vanilla'}${info.minecraft?.loader?.version ? ` ${info.minecraft.loader.version}` : ''})...`)
       mainWindow.webContents.send('game:launch_launch', info)
-      setActivity({ state: 'Playing Eminium', details: info.minecraft?.version ?? 'Minecraft', largeImageKey: 'logo' })
+      setActivity({ state: 'Playing Eminium', details: info.minecraft?.version ?? 'Minecraft' })
       if (settings.launcherAction === 'close') {
         setTimeout(() => app.quit(), 5000)
       } else if (settings.launcherAction === 'hide') {
