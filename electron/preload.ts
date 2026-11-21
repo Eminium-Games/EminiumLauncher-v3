@@ -16,6 +16,8 @@ import type {
   INews,
   IServerStatus,
   ISkin,
+  ICape,
+  IAvatar,
   JavaEvents,
   LauncherEvents,
   PatcherEvents
@@ -129,7 +131,9 @@ const rendererApi = {
   settings: {
     get: (): Promise<IGameSettings> => ipcRenderer.invoke('settings:get'),
     set: (settings: IGameSettings): Promise<void> => ipcRenderer.invoke('settings:set', settings),
-    pickJava: (): Promise<string | null> => ipcRenderer.invoke('settings:pick_java')
+    pickJava: (): Promise<string | null> => ipcRenderer.invoke('settings:pick_java'),
+    resolveJava: (): Promise<{ path: string; version: string; arch: string } | null> => ipcRenderer.invoke('java:resolve'),
+    installPatchedJava17: (): Promise<string | null> => ipcRenderer.invoke('java:install_patched_17')
   },
 
   system: {

@@ -28,6 +28,27 @@ export async function initSettings() {
   initDualSlider(sysInfo.totalMem)
   initFormValues(sysInfo.resolution)
 
+  const installPatchedJavaBtn = document.getElementById('btn-install-patched-java') as HTMLButtonElement | null
+  const installPatchedJavaStatus = document.getElementById('install-patched-java-status')
+
+  installPatchedJavaBtn?.addEventListener('click', async () => {
+    if (installPatchedJavaBtn) installPatchedJavaBtn.disabled = true
+    if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = 'Downloading patched Java 17 (this may take a few minutes)...'
+    try {
+      const path = await settings.installPatchedJava17()
+      if (path) {
+        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = `Installed: ${path}`
+        await Dialog.show('Patched Java 17 installed. Select "Use system Java (PATH)" or restart to use it.', [{ text: 'OK', type: 'ok' }])
+      } else {
+        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = 'Installation failed. See logs.'
+      }
+    } catch (err) {
+      logger.error('installPatchedJava17 failed:', err)
+      if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = 'Installation failed. See logs.'
+    } finally {
+      if (installPatchedJavaBtn) installPatchedJavaBtn.disabled = false
+    }
+  })
   const versionElem = document.getElementById('version')
   if (versionElem) versionElem.innerText = `Version ${sysInfo.version}`
 

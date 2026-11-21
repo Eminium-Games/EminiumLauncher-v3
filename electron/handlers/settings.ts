@@ -3,6 +3,7 @@ import logger from 'electron-log/main'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
+import { resolvePatchedJava, installPatchedJava17 } from './java-resolver'
 
 const settingsPath = path.join(app.getPath('userData'), 'settings.json')
 
@@ -116,6 +117,13 @@ export function registerSettingsHandlers() {
       filters: [{ name: 'Java Executable', extensions: ['exe', 'bin', ''] }]
     })
     return result.filePaths[0] ?? null
+  })
+
+  ipcMain.handle('java:resolve', async () => {
+    return await resolvePatchedJava()
+  })
+  ipcMain.handle('java:install_patched_17', async () => {
+    return await installPatchedJava17()
   })
 }
 

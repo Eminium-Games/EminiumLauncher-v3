@@ -120,6 +120,8 @@ declare global {
         get: () => Promise<IGameSettings>
         set: (s: IGameSettings) => Promise<boolean>
         pickJava: () => Promise<string | null>
+       resolveJava: () => Promise<{ path: string; version: string; arch: string } | null>
+       installPatchedJava17: () => Promise<string | null>
       }
       system: {
         getInfo: () => Promise<ISystemInfo>
@@ -223,7 +225,9 @@ export const game = {
 export const settings = {
   get: () => window.api.settings.get(),
   set: (s: IGameSettings) => window.api.settings.set(s),
-  pickJava: () => window.api.settings.pickJava()
+  pickJava: () => window.api.settings.pickJava(),
+  resolveJava: () => window.api.settings.resolveJava(),
+  installPatchedJava17: () => window.api.settings.installPatchedJava17()
 }
 
 export const system = {
