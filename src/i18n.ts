@@ -1,4 +1,6 @@
 import logger from 'electron-log/renderer'
+import enLocale from '../public/locales/en.json'
+import frLocale from '../public/locales/fr.json'
 
 export type Locale = 'fr' | 'en' | 'es' | 'de' | 'it' | 'pt' | 'ja' | 'ko' | 'zh' | 'ru'
 
@@ -14,15 +16,25 @@ function normalizeLocale(tag: string | null | undefined): Locale {
   return (SUPPORTED.includes(base as Locale) ? base : 'en') as Locale
 }
 
+const BUNDLED: Record<string, Record<string, string>> = {
+  en: enLocale as Record<string, string>,
+  fr: frLocale as Record<string, string>
+}
+
 async function loadLocale(locale: Locale): Promise<Record<string, string>> {
-  try {
-    const res = await fetch(`/locales/${locale}.json`)
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    return await res.json()
-  } catch (err) {
-    logger.warn(`Failed to load locale ${locale}:`, err)
-    return {}
+  const paths = [`./locales/${locale}.json`, `/locales/${locale}.json`]
+  for (const p of paths) {
+    try {
+      const res = await fetch(p)
+      if (!res.ok) continue
+      const data = await res.json()
+      if (data && typeof data === 'object' && Object.keys(data).length > 0) return data
+    } catch (err) {
+      logger.warn(`Failed to load locale ${locale} from ${p}:`, err)
+    }
   }
+  if (BUNDLED[locale]) return BUNDLED[locale]
+  return {}
 }
 
 export async function initI18n(preferred?: string): Promise<Locale> {
