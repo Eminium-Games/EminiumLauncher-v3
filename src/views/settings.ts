@@ -95,11 +95,15 @@ export async function initSettings() {
     const span = labelTelemetryStats.querySelector('span')
     if (span) span.textContent = t('settings.telemetry_stats')
   }
+  const hintStats = document.getElementById('hint-telemetry-stats')
+  if (hintStats) hintStats.textContent = t('settings.telemetry_stats_hint')
   const labelTelemetryCrash = document.getElementById('label-telemetry-crash')
   if (labelTelemetryCrash) {
     const span = labelTelemetryCrash.querySelector('span')
     if (span) span.textContent = t('settings.telemetry_crash')
   }
+  const hintCrash = document.getElementById('hint-telemetry-crash')
+  if (hintCrash) hintCrash.textContent = t('settings.telemetry_crash_hint')
 
   if (installPatchedJavaBtn) installPatchedJavaBtn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
   if (installPatchedJavaBtn) installPatchedJavaBtn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
