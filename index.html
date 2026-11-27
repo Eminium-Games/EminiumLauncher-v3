@@ -134,6 +134,10 @@
             </div>
 
             <button id="btn-settings" class="btn btn-secondary" title="Settings"><i class="fa-fw fa-solid fa-gear"></i></button>
+            <button id="btn-notifications" class="btn btn-secondary" title="Notifications" style="position:relative;">
+              <i class="fa-fw fa-solid fa-bell"></i>
+              <span id="notifications-badge" class="notifications-badge hidden">0</span>
+            </button>
           </div>
 
           <!-- <div class="sidebar-middle">
@@ -429,6 +433,8 @@
         </div>
       </div>
     </div>
+
+    <div id="notifications-dropdown" class="notifications-dropdown"></div>
 
     <div id="custom-dialog" class="dialog-overlay hidden">
       <div class="dialog-box">

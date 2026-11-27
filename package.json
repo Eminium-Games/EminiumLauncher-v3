@@ -4,7 +4,7 @@
   "author": "Fourty3000",
   "description": "Launcher for Eminium Games",
   "private": true,
-  "version": "3.4.32",
+  "version": "3.4.33",
   "license": "MIT",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -170,7 +170,7 @@
   "devDependencies": {
     "@electron/notarize": "^3.0.0",
     "@types/dompurify": "^3.0.5",
-    "electron": "^41.10.0",
+    "electron": "^41.10.7",
     "electron-builder": "^26.8.1",
     "prettier": "^3.8.3",
     "sass-embedded": "^1.99.0",
@@ -178,9 +178,8 @@
     "vite": "^8.0.10",
     "vite-plugin-electron": "^0.29.1"
   },
-  "allowScripts": {
-    "electron-winstaller@5.4.0": true,
-    "electron@41.10.7": true,
-    "@parcel/watcher@2.6.0": true
-  }
+"allowScripts": {
+  "@parcel/watcher@2.6.0": true,
+  "electron@41.10.7": true
+}
 }

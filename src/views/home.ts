@@ -1,6 +1,8 @@
 import { setView, getUser } from '../state'
 import { crash, game, news, server, settings, profiles } from '../ipc'
 import { Dialog } from './dialog'
+import { initNotificationsBell, pushNotification } from './notifications'
+import { showToast } from './toast'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import logger from 'electron-log/renderer'
@@ -182,6 +184,8 @@ export function initHome() {
     })
   }
 
+  initNotificationsBell()
+
   loadProfiles()
   updateServerStatus()
   loadNews()
@@ -308,7 +312,8 @@ Ready to launch the game with the following settings:
   })
   game.crashReportResult(async ({ sent }) => {
     if (sent) {
-      await Dialog.show(t('dialog.crash_sent'), [{ text: t('common.ok'), type: 'ok' }], t('dialog.crash_title'))
+      pushNotification({ id: 'crash-sent', title: t('dialog.crash_title'), message: t('dialog.crash_sent') })
+      showToast(t('dialog.crash_sent'), 'success')
       return
     }
     const choice = await Dialog.show<string>(

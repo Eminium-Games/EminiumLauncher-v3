@@ -2,9 +2,9 @@ import { logout } from '../state'
 import { auth, maintenance } from '../ipc'
 import { enterWithAccount, requestEminiumLogin } from './login'
 import { Dialog } from './dialog'
+import { t } from '../i18n'
 import logger from 'electron-log/renderer'
 import type { Account } from 'eml-lib'
-import { t } from '../i18n'
 
 function setCapsule(account: Account | null) {
   const btnAdmin = document.getElementById('btn-maintenance-login')
@@ -36,6 +36,9 @@ export function initMaintenanceLogin() {
   const btnAdmin = document.getElementById('btn-maintenance-login') as HTMLButtonElement | null
   const capsule = document.getElementById('maintenance-profile')
   if (!btnAdmin || !capsule) return
+
+  const label = btnAdmin.querySelector('span')
+  if (label) label.textContent = t('maintenance.admin_button')
 
   const maintenanceTitle = document.getElementById('maintenance-title')
   if (maintenanceTitle) maintenanceTitle.textContent = t('maintenance.title')

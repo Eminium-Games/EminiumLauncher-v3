@@ -1,6 +1,7 @@
 import { setBlockingView, setUser, setView } from './state'
 import { auth, background, maintenance, skin, updater } from './ipc'
 import { showMaintenanceProfile } from './views/maintenance-login'
+import { pushNotification } from './views/notifications'
 import logger from 'electron-log/renderer'
 import type { UpdaterProgress } from '../electron/handlers/updater'
 import { t } from './i18n'
@@ -149,6 +150,7 @@ export async function bootstrap() {
     // A logged-in (but not whitelisted) player sees their profile capsule,
     // with a logout option to retry with another account.
     if (session && session.success) showMaintenanceProfile(session.account)
+    pushNotification({ id: 'maintenance', title: t('maintenance.title'), message: mn.message ?? t('maintenance.reason_default') })
     setBlockingView('maintenance')
     return
   }

@@ -6,7 +6,6 @@
   "common.logout": "Se déconnecter",
   "common.loading": "Chargement...",
   "common.connecting": "Connexion...",
-
   "login.welcome": "Bienvenue sur le launcher d'Eminium",
   "login.connect": "Se connecter",
   "login.failed": "Échec de la connexion",
@@ -17,7 +16,6 @@
   "login.password_placeholder": "Entrez votre mot de passe :",
   "login.2fa_prompt": "Authentification à deux facteurs",
   "login.2fa_placeholder": "Entrez votre code 2FA :",
-
   "maintenance.title": "Maintenance",
   "maintenance.from_to": "Du {start} au {end}",
   "maintenance.reason_default": "Veuillez revenir plus tard.",
@@ -25,7 +23,6 @@
   "maintenance.logout": "Se déconnecter ?",
   "maintenance.bypassed": "Maintenance contournée par {name}",
   "maintenance.not_allowed": "{name} n'est pas autorisé à contourner la maintenance",
-
   "home.play": "JOUER",
   "home.select_profile": "Sélectionner un profil",
   "home.news": "Actualités",
@@ -42,7 +39,6 @@
   "home.loading_news": "Chargement des actualités...",
   "home.no_profile": "Aucun profil serveur disponible, lancement annulé",
   "home.ready_launch": "Prêt à lancer le jeu avec les paramètres suivants :",
-
   "settings.title": "Paramètres",
   "settings.version": "Version {version}",
   "settings.commit": "Commit {commit} ({mode})",
@@ -77,7 +73,6 @@
   "settings.telemetry_stats_hint": "Envoie des statistiques anonymisées (lancements, OS, RAM...) à l'AdminTool Eminium pour améliorer le launcher. Conforme RGPD, aucune donnée personnelle. Prend effet après redémarrage.",
   "settings.telemetry_crash": "Rapports de crash anonymes",
   "settings.telemetry_crash_hint": "Envoie des logs de crash anonymisés à l'AdminTool Eminium quand le jeu plante pour aider à corriger les problèmes. Les noms d'utilisateur et tokens sont automatiquement masqués. Envoyé uniquement avec votre consentement.",
-
   "patch.title": "Patch Java4Shell (CVE-2026-114938)",
   "patch.description": "CVE-2026-114938 (\"Java4Shell\") est une corruption mémoire dans le décodeur Base64 accéléré d'OpenJDK (AVX-512 VBMI), affectant Java 17.0.6+, 21, 25 et 27 sur x86-64. Le launcher applique déjà la mitigation -XX:-UseBASE64Intrinsics à chaque lancement. Vous pouvez aussi installer un Java 17 patché et forcer son usage.",
   "patch.install": "Installer Java 17 patché",
@@ -85,16 +80,21 @@
   "patch.installed": "Installé : {path}",
   "patch.failed": "Échec de l'installation. Voir les logs.",
   "patch.available": "Java patché déjà disponible : {version} ({path})",
-
   "dialog.crash_title": "Le jeu a planté",
   "dialog.crash_sent": "Le jeu a planté. Un rapport de crash anonyme a été envoyé pour aider à corriger le problème.",
   "dialog.crash_prompt": "Le jeu a planté. Envoyer un rapport de crash anonyme pour aider à corriger le problème ? Les noms d'utilisateur et tokens sont automatiquement masqués.",
   "dialog.dont_send": "Ne pas envoyer",
   "dialog.always_send": "Toujours envoyer",
   "dialog.send_once": "Envoyer une fois",
-
   "update.available": "Une mise à jour est disponible",
   "update.wait": "Veuillez patienter pendant la mise à jour du launcher...",
   "update.downloading": "Téléchargement...",
-  "update.installing": "Installation de la mise à jour, le launcher va redémarrer..."
+  "update.installing": "Installation de la mise à jour, le launcher va redémarrer...",
+  "notifications.title": "Notifications",
+  "notifications.empty": "Aucune notification.",
+  "notifications.mark_all_read": "Tout marquer lu",
+  "notifications.clear": "Effacer",
+  "notifications.open": "Ouvrir",
+  "notifications.azuriom": "Voir mes notifications",
+  "toast.crash_sent": "Rapport de crash envoyé."
 }

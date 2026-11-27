@@ -5,6 +5,8 @@ import './static/styles/login.scss'
 import './static/styles/home.scss'
 import './static/styles/settings.scss'
 import './static/styles/maintenance.scss'
+import './static/styles/toast.scss'
+import './static/styles/notifications.scss'
 import './static/styles/update.scss'
 import './static/styles/dialog.scss'
 
