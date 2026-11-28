@@ -36,6 +36,7 @@ export function initHome() {
   const playBtn = document.getElementById('btn-play')
   if (playBtn) playBtn.textContent = t('home.play')
   const settingsBtn = document.getElementById('btn-settings')
+  if (settingsBtn) settingsBtn.setAttribute('title', t('settings.title'))
   const progressContainer = document.getElementById('launch-progress-container')
   const progressBar = document.getElementById('launch-progress-bar')
   const progressLabel = document.getElementById('launch-progress-label')
@@ -212,7 +213,7 @@ export function initHome() {
     }
 
     if (!selectedProfile) {
-      logger.error('No server profile available, launch cancelled')
+      logger.error(t('home.no_profile'))
       return
     }
 

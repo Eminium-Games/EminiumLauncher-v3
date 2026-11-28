@@ -37,6 +37,8 @@ export function initMaintenanceLogin() {
   const capsule = document.getElementById('maintenance-profile')
   if (!btnAdmin || !capsule) return
 
+  capsule.setAttribute('title', t('maintenance.logout'))
+
   const label = btnAdmin.querySelector('span')
   if (label) label.textContent = t('maintenance.admin_button')
 
@@ -71,14 +73,14 @@ export function initMaintenanceLogin() {
       }
     } catch (err) {
       logger.error(err)
-      await Dialog.show('An error occurred during login.', [{ text: 'OK', type: 'ok' }])
+      await Dialog.show(t('login.error'), [{ text: t('common.ok'), type: 'ok' }])
     } finally {
       btnAdmin.disabled = false
     }
   })
 
   capsule.addEventListener('click', async () => {
-    if (await Dialog.show(t('maintenance.logout'), [{ text: t('common.cancel'), type: 'cancel' }, { text: t('common.logout') ?? 'Logout', type: 'danger' }])) {
+    if (await Dialog.show(t('maintenance.logout'), [{ text: t('common.cancel'), type: 'cancel' }, { text: t('common.logout'), type: 'danger' }])) {
       await auth.logout()
       logout()
       setCapsule(null)

@@ -50,6 +50,18 @@ export async function initSettings() {
     if (optSystem) optSystem.textContent = t('settings.java_system')
   }
 
+  const patchTitle = document.getElementById('patch-title')
+  if (patchTitle) patchTitle.textContent = t('settings.tab_patch')
+
+  const patchDesc = document.getElementById('patch-desc')
+  if (patchDesc) patchDesc.textContent = t('patch.description')
+
+  const labelManageAccount = document.getElementById('label-manage-account')
+  if (labelManageAccount) labelManageAccount.textContent = t('settings.manage_account')
+  const labelSavedAccounts = document.getElementById('label-saved-accounts')
+  if (labelSavedAccounts) labelSavedAccounts.innerHTML = `<i class="fa-fw fa-solid fa-users"></i>&nbsp;&nbsp;${t('accounts.saved')}`
+  const settingsTitle = document.getElementById('settings-title')
+  if (settingsTitle) settingsTitle.textContent = t('settings.title')
   const tabGameTitle = document.getElementById('tab-game-title')
   const tabAccountTitle = document.getElementById('tab-account-title')
   const tabPrivacyTitle = document.getElementById('tab-privacy-title')
@@ -123,7 +135,7 @@ export async function initSettings() {
   })
   const repairGameBtn = document.getElementById('btn-repair-game') as HTMLButtonElement | null
   repairGameBtn?.addEventListener('click', async () => {
-    const ok = await Dialog.show('This will delete the downloaded game files (versions & libraries) and re-download them on next launch. Your saves are kept. Continue?', [{ text: 'Cancel', type: 'cancel' }, { text: 'Repair', type: 'danger' }])
+    const ok = await Dialog.show(t('settings.repair_confirm'), [{ text: t('common.cancel'), type: 'cancel' }, { text: t('settings.repair'), type: 'danger' }])
     if (!ok) return
     const res = await system.repairGame()
     if (res.success) {
@@ -148,7 +160,7 @@ export async function initSettings() {
       logger.error('Failed to load accounts:', err)
     }
     if (accounts.length === 0) {
-      list.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">No saved accounts.</p>'
+      list.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">' + t('accounts.none') + '</p>'
       return
     }
     accounts.forEach((acc, idx) => {
@@ -161,7 +173,7 @@ export async function initSettings() {
       if (!acc.active) {
         const switchBtn = document.createElement('button')
         switchBtn.className = 'btn btn-secondary'
-        switchBtn.textContent = 'Switch'
+        switchBtn.textContent = t('accounts.switch')
         switchBtn.onclick = async () => {
           const res = await auth.switch(idx)
           if (res.success && 'account' in res && res.account) {
@@ -174,7 +186,7 @@ export async function initSettings() {
       }
       const removeBtn = document.createElement('button')
       removeBtn.className = 'btn btn-danger'
-      removeBtn.textContent = 'Remove'
+      removeBtn.textContent = t('accounts.remove')
       removeBtn.onclick = async () => {
         await auth.remove(idx)
         await renderAccounts()
@@ -185,6 +197,7 @@ export async function initSettings() {
   }
 
   const btnAddAccount = document.getElementById('btn-add-account') as HTMLButtonElement | null
+  if (btnAddAccount) btnAddAccount.innerHTML = `<i class="fa-solid fa-plus"></i> ${t('accounts.add')}`
   btnAddAccount?.addEventListener('click', async () => {
     const account = await requestEminiumLogin()
     if (account) {
@@ -201,18 +214,18 @@ export async function initSettings() {
       devSection.className = 'tab-content'
       devSection.id = 'tab-dev'
       devSection.innerHTML = `
-        <h3>Dev: Seasonal event date override</h3>
+        <h3>${t('dev.seasonal_title')}</h3>
         <div class="setting-group">
           <label>Override date (YYYY-MM-DD)</label>
           <input type="date" id="dev-seasonal-date" style="padding:8px;border-radius:4px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text-main);" />
           <button id="dev-seasonal-apply" class="btn btn-secondary" style="margin-top:8px;">Apply</button>
-          <button id="dev-seasonal-clear" class="btn btn-secondary" style="margin-top:8px;">Clear override</button>
+          <button id="dev-seasonal-clear" class="btn btn-secondary" style="margin-top:8px;">${t('dev.clear_override')}</button>
           <p id="dev-seasonal-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
         </div>
         <div class="setting-group" style="margin-top:1.5rem;">
-          <label>Language override (for translation testing)</label>
+          <label>${t('dev.language_title')}</label>
           <select id="dev-locale-select" style="padding:8px;border-radius:4px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text-main);">
-            <option value="">OS default</option>
+            <option value="">${t('accounts.os_default')}</option>
             <option value="fr">Français (fr)</option>
             <option value="en">English (en)</option>
             <option value="es">Español (es)</option>
@@ -224,7 +237,7 @@ export async function initSettings() {
             <option value="zh">中文 (zh)</option>
             <option value="ru">Русский (ru)</option>
           </select>
-          <button id="dev-locale-apply" class="btn btn-secondary" style="margin-top:8px;">Apply & reload</button>
+          <button id="dev-locale-apply" class="btn btn-secondary" style="margin-top:8px;">${t('dev.apply_reload')}</button>
           <p id="dev-locale-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
         </div>
       `
@@ -243,7 +256,7 @@ export async function initSettings() {
       const statusEl = document.getElementById('dev-seasonal-status')
       const effective = getEffectiveDate()
       dateInput.value = effective.toISOString().slice(0, 10)
-      if (statusEl) statusEl.innerText = isSeasonalActive() ? 'Seasonal event ACTIVE for this date' : 'Seasonal event inactive for this date'
+      if (statusEl) statusEl.innerText = isSeasonalActive() ? t('seasonal.active') : t('seasonal.inactive')
 
       document.getElementById('dev-seasonal-apply')?.addEventListener('click', () => {
         const v = dateInput.value
@@ -281,7 +294,10 @@ export async function initSettings() {
         try {
           if (v) localStorage.setItem('locale_override', v)
           else localStorage.removeItem('locale_override')
-        } catch {}
+        } catch (e) {
+          console.error('localStorage failed:', e)
+        }
+        console.log('Reloading with locale override:', v || '(cleared)')
         window.location.reload()
       })
     }
@@ -306,7 +322,7 @@ export async function initSettings() {
           const group = document.createElement('div')
           group.className = 'setting-group'
           const label = document.createElement('label')
-          label.innerHTML = `<i class="fa-fw fa-solid fa-shield-halved"></i>&nbsp;&nbsp;Patched Java 17`
+          label.innerHTML = `<i class="fa-fw fa-solid fa-shield-halved"></i>&nbsp;&nbsp;${t('patched_java_17')}`
           group.appendChild(label)
 
           const btn = document.createElement('button')
@@ -334,7 +350,7 @@ export async function initSettings() {
               if (path) {
                 installBtn.style.display = 'none'
                 statusEl.innerText = t('patch.installed', { path })
-                await Dialog.show('Patched Java 17 installed. Select "Use system Java (PATH)" or restart to use it.', [{ text: 'OK', type: 'ok' }])
+                await Dialog.show(t('settings.patched_java_installed'), [{ text: t('common.ok'), type: 'ok' }])
               } else {
                 statusEl.innerText = t('patch.failed')
               }
@@ -419,15 +435,14 @@ export async function initSettings() {
   const checkUpdatesBtn = document.getElementById('btn-check-updates') as HTMLButtonElement | null
   checkUpdatesBtn?.addEventListener('click', async () => {
     checkUpdatesBtn.disabled = true
-    setStatus('Checking for updates...')
+    setStatus(t('settings.checking_updates'))
     try {
       const res = await updater.check()
       if (!res.updateAvailable || !res.latest) {
-        if (res.reason === 'offline') setStatus('Cannot reach GitHub, check your connection.')
-        else if (res.reason === 'build-pending') setStatus('CI has not built this commit yet, try again later.')
-        else if (res.reason === 'install-pending')
-          setStatus('Update already installed, but this copy is still outdated (installed in another folder?).')
-        else setStatus('You are up to date.')
+        if (res.reason === 'offline') setStatus(t('settings.offline'))
+        else if (res.reason === 'build-pending') setStatus(t('settings.build_pending'))
+        else if (res.reason === 'install-pending') setStatus(t('settings.install_pending'))
+        else setStatus(t('settings.up_to_date'))
       } else {
         setStatus(`Update ${res.latest.slice(0, 7)} found. Downloading...`)
         const off = updater.onProgress((p) => {
@@ -435,7 +450,7 @@ export async function initSettings() {
         })
         try {
           const installerPath = await updater.download()
-          setStatus('Installing update, the launcher will restart...')
+          setStatus(t('update.installing'))
           await updater.install(installerPath ?? undefined)
         } finally {
           off()
@@ -476,9 +491,9 @@ function initUIListeners() {
 
   logoutBtn?.addEventListener('click', async () => {
     if (
-      await Dialog.show('Log out?', [
-        { text: 'Cancel', type: 'cancel' },
-        { text: 'Logout', type: 'danger' }
+      await Dialog.show(t('settings.logout_confirm'), [
+        { text: t('common.cancel'), type: 'cancel' },
+        { text: t('settings.logout'), type: 'danger' }
       ])
     ) {
       await auth.logout()
@@ -625,7 +640,7 @@ function initFormValues(resolution: { width: number; height: number }) {
     availableResolutions.forEach((res) => {
       const option = document.createElement('option')
       option.value = res.value
-      option.innerText = res.label
+      option.innerText = res.value === 'fullscreen' ? t('settings.fullscreen') : res.value === '854x480' && res.label === 'Auto (default)' ? t('settings.auto_default') : res.label
       resolutionSelect.appendChild(option)
     })
 
@@ -702,7 +717,7 @@ async function addSkin() {
   try {
     const result = await skin.updateSkin(skinSource, variant)
     if (!result) {
-      await Dialog.show('Failed to add skin. Please check the URL or file and try again.', [{ text: 'Close', type: 'ok' }])
+      await Dialog.show(t('settings.failed_add_skin'), [{ text: t('common.close'), type: 'ok' }])
       return
     }
 
@@ -710,7 +725,7 @@ async function addSkin() {
     shared.resetMainView()
     shared.resetSkinViews()
   } catch (err) {
-    await Dialog.show('An error occurred while adding the skin. Please try again in few minutes.', [{ text: 'Close', type: 'ok' }])
+    await Dialog.show('An error occurred while adding the skin. Please try again in few minutes.', [{ text: t('common.close'), type: 'ok' }])
     return
   }
 }

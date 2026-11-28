@@ -2,6 +2,7 @@ import type { Account, IAvatar, ICape, ISkin } from 'eml-lib'
 import { SkinViewer, WalkingAnimation } from 'skinview3d'
 import { skin } from './ipc'
 import { Dialog } from './views/dialog'
+import { t } from './i18n'
 import logger from 'electron-log/renderer'
 
 const DEFAULT_SKIN = {
@@ -107,7 +108,7 @@ const shared = {
           document.getElementById('settings-content')?.scrollTo({ top: 0, behavior: 'smooth' })
         } catch (err) {
           logger.error('Error occurred while changing the skin:', err)
-          await Dialog.show('An error occurred while changing the skin. Please try again in few minutes.', [{ text: 'Close', type: 'ok' }])
+          await Dialog.show(t('shared.skin_change_error'), [{ text: t('common.close'), type: 'ok' }])
         }
       })
 
@@ -123,7 +124,7 @@ const shared = {
             shared.resetSkinViews()
           } catch (err) {
             logger.error('Error occurred while deleting the skin:', err)
-            await Dialog.show('An error occurred while deleting the skin.', [{ text: 'OK', type: 'ok' }])
+            await Dialog.show(t('shared.skin_delete_error'), [{ text: t('common.ok'), type: 'ok' }])
           }
         })
 
@@ -178,7 +179,7 @@ const shared = {
           document.getElementById('settings-content')?.scrollTo({ top: 0, behavior: 'smooth' })
         } catch (err) {
           logger.error('Error occurred while unequipping the cape:', err)
-          await Dialog.show('An error occurred while unequipping the cape. Please try again in few minutes.', [{ text: 'Close', type: 'ok' }])
+          await Dialog.show(t('shared.cape_unequip_error'), [{ text: t('common.close'), type: 'ok' }])
         }
       }
     })
@@ -201,7 +202,7 @@ const shared = {
           document.getElementById('settings-content')?.scrollTo({ top: 0, behavior: 'smooth' })
         } catch (err) {
           logger.error('Error occurred while changing the cape:', err)
-          await Dialog.show('An error occurred while changing the cape. Please try again in few minutes.', [{ text: 'Close', type: 'ok' }])
+          await Dialog.show(t('shared.cape_change_error'), [{ text: t('common.close'), type: 'ok' }])
         }
       })
 
