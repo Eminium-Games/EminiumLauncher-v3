@@ -121,10 +121,11 @@
   "patched_java_17": "Java 17 patché",
   "seasonal.active": "Événement saisonnier ACTIF pour cette date",
   "seasonal.inactive": "Événement saisonnier inactif pour cette date",
-  "dev.seasonal_title": "Dev : override de date d'événement saisonnier",
-  "dev.language_title": "Override de langue (tests de traduction)",
+  "dev": "Panneau des développeurs",
   "dev.apply_reload": "Appliquer et recharger",
   "dev.clear_override": "Effacer l'override",
   "settings.repair_confirm": "Réparer",
-  "settings.repair": "Réparer"
+  "settings.repair": "Réparer",
+  "accounts.choose": "Choisir mon compte",
+  "accounts.hide": "Masquer les comptes"
 }

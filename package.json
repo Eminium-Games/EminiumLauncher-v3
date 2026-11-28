@@ -4,7 +4,7 @@
   "author": "Fourty3000",
   "description": "Launcher for Eminium Games",
   "private": true,
-  "version": "3.4.38",
+  "version": "3.4.39",
   "license": "MIT",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -162,9 +162,11 @@
   "dependencies": {
     "discord-rpc": "^4.0.1",
     "dompurify": "^3.4.2",
+    "easter-egg-collection": "^1.4.56",
     "electron-log": "^5.4.3",
     "eml-lib": "^2.7.4",
     "falling-snow": "^1.0.0",
+    "ko-co": "^1.5.2",
     "marked": "^18.0.3",
     "skinview3d": "^3.4.1"
   },

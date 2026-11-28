@@ -53,13 +53,11 @@ export async function initSettings() {
   const patchTitle = document.getElementById('patch-title')
   if (patchTitle) patchTitle.textContent = t('settings.tab_patch')
 
-  const patchDesc = document.getElementById('patch-desc')
-  if (patchDesc) patchDesc.textContent = t('patch.description')
 
   const labelManageAccount = document.getElementById('label-manage-account')
   if (labelManageAccount) labelManageAccount.textContent = t('settings.manage_account')
-  const labelSavedAccounts = document.getElementById('label-saved-accounts')
-  if (labelSavedAccounts) labelSavedAccounts.innerHTML = `<i class="fa-fw fa-solid fa-users"></i>&nbsp;&nbsp;${t('accounts.saved')}`
+  // const labelSavedAccounts = document.getElementById('label-saved-accounts')
+  // if (labelSavedAccounts) labelSavedAccounts.innerHTML = `<i class="fa-fw fa-solid fa-users"></i>&nbsp;&nbsp;${t('accounts.saved')}`
   const settingsTitle = document.getElementById('settings-title')
   if (settingsTitle) settingsTitle.textContent = t('settings.title')
   const tabGameTitle = document.getElementById('tab-game-title')
@@ -163,48 +161,99 @@ export async function initSettings() {
       list.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">' + t('accounts.none') + '</p>'
       return
     }
-    accounts.forEach((acc, idx) => {
-      const row = document.createElement('div')
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--line-strong);border-radius:4px;'
-      const name = document.createElement('span')
-      name.style.flex = '1'
-      name.textContent = `${acc.name}${acc.active ? ' (active)' : ''}`
-      row.appendChild(name)
-      if (!acc.active) {
-        const switchBtn = document.createElement('button')
-        switchBtn.className = 'btn btn-secondary'
-        switchBtn.textContent = t('accounts.switch')
-        switchBtn.onclick = async () => {
-          const res = await auth.switch(idx)
-          if (res.success && 'account' in res && res.account) {
-            const [__, skins, capes, avatar] = await Promise.all([skin.reload(res.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
-            await setUser(res.account, { skins, capes, avatar })
-            await renderAccounts()
-          }
-        }
-        row.appendChild(switchBtn)
-      }
-      const removeBtn = document.createElement('button')
-      removeBtn.className = 'btn btn-danger'
-      removeBtn.textContent = t('accounts.remove')
-      removeBtn.onclick = async () => {
-        await auth.remove(idx)
+
+    // Boutons en ligne
+    const btnRow = document.createElement('div')
+    btnRow.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;'
+    const toggleBtn = document.createElement('button')
+    toggleBtn.className = 'btn btn-secondary'
+    toggleBtn.style.flex = '1'
+    toggleBtn.innerHTML = `<i class="fa-solid fa-users"></i> ${t('accounts.choose')}`
+    btnRow.appendChild(toggleBtn)
+    const addBtn = document.createElement('button')
+    addBtn.className = 'btn btn-secondary'
+    addBtn.style.flex = '1'
+    addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> ${t('accounts.add')}`
+    btnRow.appendChild(addBtn)
+    list.appendChild(btnRow)
+
+    // Liste déroulante (masquée par défaut)
+    const listWrap = document.createElement('div')
+    listWrap.style.display = 'none'
+    list.appendChild(listWrap)
+
+    toggleBtn.addEventListener('click', () => {
+      const open = listWrap.style.display === 'block'
+      listWrap.style.display = open ? 'none' : 'block'
+      toggleBtn.innerHTML = open
+        ? `<i class="fa-solid fa-users"></i> ${t('accounts.choose')}`
+        : `<i class="fa-solid fa-chevron-up"></i> ${t('accounts.hide')}`
+    })
+
+    addBtn.addEventListener('click', async () => {
+      const account = await requestEminiumLogin()
+      if (account) {
+        await enterWithAccount(account)
         await renderAccounts()
       }
+    })
+
+    accounts.forEach((acc, idx) => {
+      const row = document.createElement('div')
+      row.className = 'account-row' + (acc.active ? ' active' : '')
+
+      const rowAvatar = document.createElement('img')
+      rowAvatar.src = `https://minotar.net/helm/${encodeURIComponent(acc.name)}/40`
+      rowAvatar.alt = acc.name
+      rowAvatar.className = 'account-row-avatar'
+      rowAvatar.onerror = () => { rowAvatar.src = 'https://minotar.net/helm/steve/40.png' }
+      row.appendChild(rowAvatar)
+
+      const rowInfo = document.createElement('div')
+      rowInfo.className = 'account-row-info'
+      const rowName = document.createElement('span')
+      rowName.className = 'account-row-name'
+      rowName.textContent = acc.name
+      rowInfo.appendChild(rowName)
+      if (acc.role) {
+        const rowRole = document.createElement('span')
+        rowRole.className = 'account-row-role'
+        rowRole.textContent = acc.role
+        rowInfo.appendChild(rowRole)
+      }
+      row.appendChild(rowInfo)
+
+      if (acc.active) {
+        const check = document.createElement('span')
+        check.className = 'account-row-check'
+        check.textContent = '✓'
+        row.appendChild(check)
+      } else {
+        row.style.cursor = 'pointer'
+        row.addEventListener('click', async () => {
+          const res = await auth.switch(idx)
+          if (res.success && 'account' in res && res.account) {
+            const [__, skins, capes, avatar2] = await Promise.all([skin.reload(res.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
+            await setUser(res.account, { skins, capes, avatar: avatar2 })
+            await renderAccounts()
+          }
+        })
+      }
+
+      const removeBtn = document.createElement('button')
+      removeBtn.className = 'account-row-remove'
+      removeBtn.innerHTML = '<i class="fa-solid fa-times"></i>'
+      removeBtn.title = t('accounts.remove')
+      removeBtn.addEventListener('click', async (e) => {
+        e.stopPropagation()
+        await auth.remove(idx)
+        await renderAccounts()
+      })
       row.appendChild(removeBtn)
-      list.appendChild(row)
+
+      listWrap.appendChild(row)
     })
   }
-
-  const btnAddAccount = document.getElementById('btn-add-account') as HTMLButtonElement | null
-  if (btnAddAccount) btnAddAccount.innerHTML = `<i class="fa-solid fa-plus"></i> ${t('accounts.add')}`
-  btnAddAccount?.addEventListener('click', async () => {
-    const account = await requestEminiumLogin()
-    if (account) {
-      await enterWithAccount(account)
-      await renderAccounts()
-    }
-  })
 
   // Mode dev : sélecteur de date pour tester les événements saisonniers
   if (isDevMode()) {
@@ -214,31 +263,12 @@ export async function initSettings() {
       devSection.className = 'tab-content'
       devSection.id = 'tab-dev'
       devSection.innerHTML = `
-        <h3>${t('dev.seasonal_title')}</h3>
+        <h3>${t('dev')}</h3>
         <div class="setting-group">
-          <label>Override date (YYYY-MM-DD)</label>
           <input type="date" id="dev-seasonal-date" style="padding:8px;border-radius:4px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text-main);" />
           <button id="dev-seasonal-apply" class="btn btn-secondary" style="margin-top:8px;">Apply</button>
           <button id="dev-seasonal-clear" class="btn btn-secondary" style="margin-top:8px;">${t('dev.clear_override')}</button>
           <p id="dev-seasonal-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
-        </div>
-        <div class="setting-group" style="margin-top:1.5rem;">
-          <label>${t('dev.language_title')}</label>
-          <select id="dev-locale-select" style="padding:8px;border-radius:4px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text-main);">
-            <option value="">${t('accounts.os_default')}</option>
-            <option value="fr">Français (fr)</option>
-            <option value="en">English (en)</option>
-            <option value="es">Español (es)</option>
-            <option value="de">Deutsch (de)</option>
-            <option value="it">Italiano (it)</option>
-            <option value="pt">Português (pt)</option>
-            <option value="ja">日本語 (ja)</option>
-            <option value="ko">한국어 (ko)</option>
-            <option value="zh">中文 (zh)</option>
-            <option value="ru">Русский (ru)</option>
-          </select>
-          <button id="dev-locale-apply" class="btn btn-secondary" style="margin-top:8px;">${t('dev.apply_reload')}</button>
-          <p id="dev-locale-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
         </div>
       `
       // Add nav button
@@ -276,30 +306,6 @@ export async function initSettings() {
         if (statusEl) statusEl.innerText = isSeasonalActive(d) ? 'Seasonal event ACTIVE for this date' : 'Seasonal event inactive for this date'
       })
 
-      // Language override
-      const localeSelect = document.getElementById('dev-locale-select') as HTMLSelectElement | null
-      const localeStatus = document.getElementById('dev-locale-status')
-      if (localeSelect) {
-        try {
-          const cur = localStorage.getItem('locale_override') || ''
-          localeSelect.value = cur
-        } catch {}
-        if (localeStatus) {
-          const eff = localStorage.getItem('locale_override') || 'OS default'
-          localeStatus.innerText = `Current override: ${eff}`
-        }
-      }
-      document.getElementById('dev-locale-apply')?.addEventListener('click', () => {
-        const v = localeSelect?.value || ''
-        try {
-          if (v) localStorage.setItem('locale_override', v)
-          else localStorage.removeItem('locale_override')
-        } catch (e) {
-          console.error('localStorage failed:', e)
-        }
-        console.log('Reloading with locale override:', v || '(cleared)')
-        window.location.reload()
-      })
     }
   }
 

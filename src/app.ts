@@ -17,6 +17,9 @@ import { initSettings } from './views/settings'
 import { bootstrap } from './init'
 import { initI18n } from './i18n'
 import { isSeasonalActive, startSnow } from './seasonal'
+import { initKonami } from './konami'
+// @ts-ignore - easter-egg-collection has no types
+import 'easter-egg-collection'
 
 initI18n().then(() => {
   initLogin()
@@ -27,6 +30,7 @@ initI18n().then(() => {
     if (isSeasonalActive()) {
       startSnow()
     }
+    initKonami()
   })
 })
 

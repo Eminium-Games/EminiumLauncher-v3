@@ -126,5 +126,7 @@
   "dev.apply_reload": "Apply & reload",
   "dev.clear_override": "Clear override",
   "settings.repair_confirm": "This will delete the downloaded game files (versions & libraries) and re-download them on next launch. Your saves are kept. Continue?",
-  "settings.repair": "Repair"
+  "settings.repair": "Repair",
+  "accounts.choose": "Choose my account",
+  "accounts.hide": "Hide accounts"
 }
