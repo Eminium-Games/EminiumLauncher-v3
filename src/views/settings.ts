@@ -209,6 +209,24 @@ export async function initSettings() {
           <button id="dev-seasonal-clear" class="btn btn-secondary" style="margin-top:8px;">Clear override</button>
           <p id="dev-seasonal-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
         </div>
+        <div class="setting-group" style="margin-top:1.5rem;">
+          <label>Language override (for translation testing)</label>
+          <select id="dev-locale-select" style="padding:8px;border-radius:4px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text-main);">
+            <option value="">OS default</option>
+            <option value="fr">Français (fr)</option>
+            <option value="en">English (en)</option>
+            <option value="es">Español (es)</option>
+            <option value="de">Deutsch (de)</option>
+            <option value="it">Italiano (it)</option>
+            <option value="pt">Português (pt)</option>
+            <option value="ja">日本語 (ja)</option>
+            <option value="ko">한국어 (ko)</option>
+            <option value="zh">中文 (zh)</option>
+            <option value="ru">Русский (ru)</option>
+          </select>
+          <button id="dev-locale-apply" class="btn btn-secondary" style="margin-top:8px;">Apply & reload</button>
+          <p id="dev-locale-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
+        </div>
       `
       // Add nav button
       const nav = document.querySelector('.settings-sidebar nav')
@@ -243,6 +261,28 @@ export async function initSettings() {
         stopSnow()
         if (isSeasonalActive(d)) startSnow()
         if (statusEl) statusEl.innerText = isSeasonalActive(d) ? 'Seasonal event ACTIVE for this date' : 'Seasonal event inactive for this date'
+      })
+
+      // Language override
+      const localeSelect = document.getElementById('dev-locale-select') as HTMLSelectElement | null
+      const localeStatus = document.getElementById('dev-locale-status')
+      if (localeSelect) {
+        try {
+          const cur = localStorage.getItem('locale_override') || ''
+          localeSelect.value = cur
+        } catch {}
+        if (localeStatus) {
+          const eff = localStorage.getItem('locale_override') || 'OS default'
+          localeStatus.innerText = `Current override: ${eff}`
+        }
+      }
+      document.getElementById('dev-locale-apply')?.addEventListener('click', () => {
+        const v = localeSelect?.value || ''
+        try {
+          if (v) localStorage.setItem('locale_override', v)
+          else localStorage.removeItem('locale_override')
+        } catch {}
+        window.location.reload()
       })
     }
   }

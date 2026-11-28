@@ -41,17 +41,19 @@ export async function initI18n(preferred?: string): Promise<Locale> {
   let tag = preferred
   if (!tag) {
     try {
+      tag = localStorage.getItem('locale_override') || navigator.language
+    } catch {
       tag = navigator.language
-    } catch {
-      tag = 'en'
     }
-    // Try to get OS locale from main process if available
-    try {
-      const { system } = await import('./ipc')
-      const info = await system.getInfo()
-      if (info?.locale) tag = info.locale
-    } catch {
-      // ignore
+    // Try to get OS locale from main process if available (only if no override)
+    if (!localStorage.getItem('locale_override')) {
+      try {
+        const { system } = await import('./ipc')
+        const info = await system.getInfo()
+        if (info?.locale) tag = info.locale
+      } catch {
+        // ignore
+      }
     }
   }
   currentLocale = normalizeLocale(tag)
