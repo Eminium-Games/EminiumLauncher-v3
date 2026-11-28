@@ -28,6 +28,7 @@ export interface UpdaterCheckResult {
   latest: string | null
   mode: UpdaterMode
   reason?: string
+  commitMessage?: string | null
 }
 
 export interface UpdaterInfo extends UpdaterCheckResult {
@@ -133,6 +134,21 @@ async function getCurrentSha(projectRoot: string | null): Promise<string> {
 }
 
 /** Latest commit SHA of main on GitHub. Null when offline / rate-limited. */
+async function getCommitMessage(sha: string): Promise<string | null> {
+  try {
+    const res = await fetchWithTimeout('https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/commits/' + sha, API_TIMEOUT_MS, {
+      headers: { 'User-Agent': 'Eminium-Games-Launcher', Accept: 'application/vnd.github.v3+json' }
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { commit?: { message?: string } }
+    const msg = data.commit?.message?.trim()
+    if (!msg) return null
+    return msg.split('\n')[0].trim()
+  } catch {
+    return null
+  }
+}
+
 async function getLatestSha(): Promise<string | null> {
   try {
     const res = await fetchWithTimeout(GH_API_COMMIT, API_TIMEOUT_MS, {
@@ -216,8 +232,9 @@ export function registerUpdaterHandlers(mainWindow: BrowserWindow) {
       }
     }
 
+    const commitMessage = await getCommitMessage(latest)
     pendingUpdate = { latest }
-    return { updateAvailable: true, current, latest, mode }
+    return { updateAvailable: true, current, latest, mode, commitMessage }
   })
 
   ipcMain.handle('updater:download', async (): Promise<string | null> => {

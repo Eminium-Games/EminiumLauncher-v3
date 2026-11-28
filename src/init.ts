@@ -84,6 +84,12 @@ async function applyLauncherUpdate(): Promise<boolean> {
   logger.log(`Update found: ${check.current.slice(0, 7)} -> ${check.latest.slice(0, 7)} (mode: ${check.mode})`)
   showUpdateView(check.mode === 'dev' ? t('update.installing') : t('update.downloading'))
 
+  // Affiche le message du commit sous la barre de progression.
+  const commitEl = document.getElementById('update-commit')
+  if (commitEl && check.commitMessage) {
+    commitEl.innerText = check.commitMessage
+  }
+
   const offProgress = updater.onProgress((p) => {
     // renderUpdateProgress(p, check.mode === 'dev' ? 'Updating...' : 'Downloading update...')
     renderUpdateProgress(p)
