@@ -16,12 +16,17 @@ import { initMaintenanceLogin } from './views/maintenance-login'
 import { initSettings } from './views/settings'
 import { bootstrap } from './init'
 import { initI18n } from './i18n'
+import { isSeasonalActive, startSnow } from './seasonal'
 
 initI18n().then(() => {
   initLogin()
   initHome()
   initMaintenanceLogin()
   initSettings()
-  bootstrap()
+  bootstrap().then(() => {
+    if (isSeasonalActive()) {
+      startSnow()
+    }
+  })
 })
 

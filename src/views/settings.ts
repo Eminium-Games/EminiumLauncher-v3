@@ -7,6 +7,7 @@ import shared from '../shared'
 import { t } from '../i18n'
 import { enterWithAccount, requestEminiumLogin } from './login'
 import { setUser } from '../state'
+import { isDevMode, setOverrideDate, getEffectiveDate, isSeasonalActive, startSnow, stopSnow } from '../seasonal'
 
 const resolutionList = [
   { label: 'Auto (default)', value: '854x480', width: 854, height: 480 },
@@ -228,6 +229,65 @@ export async function initSettings() {
       await renderAccounts()
     }
   })
+
+  // Mode dev : sélecteur de date pour tester les événements saisonniers
+  if (isDevMode()) {
+    const content = document.getElementById('settings-content')
+    if (content) {
+      const devSection = document.createElement('section')
+      devSection.className = 'tab-content active'
+      devSection.id = 'tab-dev'
+      devSection.innerHTML = `
+        <h3>Dev: Seasonal event date override</h3>
+        <div class="setting-group">
+          <label>Override date (YYYY-MM-DD)</label>
+          <input type="date" id="dev-seasonal-date" style="padding:8px;border-radius:4px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text-main);" />
+          <button id="dev-seasonal-apply" class="btn btn-secondary" style="margin-top:8px;">Apply</button>
+          <button id="dev-seasonal-clear" class="btn btn-secondary" style="margin-top:8px;">Clear override</button>
+          <p id="dev-seasonal-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
+        </div>
+      `
+      // Add nav button
+      const nav = document.querySelector('.settings-sidebar nav')
+      if (nav) {
+        const btn = document.createElement('button')
+        btn.className = 'btn nav-btn'
+        btn.setAttribute('data-tab', 'dev')
+        btn.innerHTML = '<i class="fa-solid fa-flask"></i><span>Dev</span>'
+        nav.appendChild(btn)
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'))
+          btn.classList.add('active')
+          document.querySelectorAll('.tab-content').forEach((c) => (c.id === 'tab-dev' ? c.classList.add('active') : c.classList.remove('active')))
+        })
+      }
+      content.appendChild(devSection)
+
+      const dateInput = document.getElementById('dev-seasonal-date') as HTMLInputElement
+      const statusEl = document.getElementById('dev-seasonal-status')
+      const effective = getEffectiveDate()
+      dateInput.value = effective.toISOString().slice(0, 10)
+      if (statusEl) statusEl.innerText = isSeasonalActive() ? 'Seasonal event ACTIVE for this date' : 'Seasonal event inactive for this date'
+
+      document.getElementById('dev-seasonal-apply')?.addEventListener('click', () => {
+        const v = dateInput.value
+        if (!v) return
+        setOverrideDate(v)
+        const d = new Date(v)
+        stopSnow()
+        if (isSeasonalActive(d)) startSnow()
+        if (statusEl) statusEl.innerText = isSeasonalActive(d) ? 'Seasonal event ACTIVE for this date' : 'Seasonal event inactive for this date'
+      })
+      document.getElementById('dev-seasonal-clear')?.addEventListener('click', () => {
+        setOverrideDate(null)
+        const d = new Date()
+        dateInput.value = d.toISOString().slice(0, 10)
+        stopSnow()
+        if (isSeasonalActive(d)) startSnow()
+        if (statusEl) statusEl.innerText = isSeasonalActive(d) ? 'Seasonal event ACTIVE for this date' : 'Seasonal event inactive for this date'
+      })
+    }
+  }
 
   renderAccounts()
   const updateStatus = document.getElementById('update-status')
