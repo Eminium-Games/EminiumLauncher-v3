@@ -346,21 +346,11 @@
             </section>
 
             <section id="tab-patch" class="tab-content">
-              <h3 id="patch-title">Java4Shell patch (CVE-2026-114938)</h3>
+              <h3 id="patch-title">Patches</h3>
               <p id="patch-desc" style="margin-bottom:1rem;opacity:0.85;">
-                CVE-2026-114938 ("Java4Shell") is a memory corruption in OpenJDK's
-                hardware-accelerated Base64 decoder (AVX-512 VBMI), affecting Java 17.0.6+,
-                21, 25 and 27 on x86-64. The launcher already applies the mitigation
-                <code>-XX:-UseBASE64Intrinsics</code> to every launch. You can also install
-                a patched Java 17 runtime and force its use.
+                Security patches and mitigations available for the launcher.
               </p>
-              <div class="setting-group">
-                <label><i class="fa-fw fa-solid fa-shield-halved"></i>&nbsp;&nbsp;Patched Java 17</label>
-                <button id="btn-install-patched-java" class="btn btn-secondary" style="margin-top:8px;">
-                  <i class="fa-solid fa-download"></i> Install patched Java 17
-                </button>
-                <p id="install-patched-java-status" style="margin-top:6px;font-size:0.85rem;opacity:0.8;"></p>
-              </div>
+              <div id="patches-list" style="display:flex;flex-direction:column;gap:8px;"></div>
             </section>
 
             <section id="tab-account" class="tab-content">

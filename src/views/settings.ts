@@ -50,20 +50,15 @@ export async function initSettings() {
     if (optSystem) optSystem.textContent = t('settings.java_system')
   }
 
-  const patchTitle = document.getElementById('patch-title')
-  if (patchTitle) patchTitle.textContent = t('patch.title')
-
   const tabGameTitle = document.getElementById('tab-game-title')
   const tabAccountTitle = document.getElementById('tab-account-title')
   const tabPrivacyTitle = document.getElementById('tab-privacy-title')
   if (tabGameTitle) tabGameTitle.textContent = t('settings.section_game')
   if (tabAccountTitle) tabAccountTitle.textContent = t('settings.section_account')
   if (tabPrivacyTitle) tabPrivacyTitle.textContent = t('settings.section_privacy')
-  const patchDesc = document.getElementById('patch-desc')
-  if (patchTitle) patchTitle.textContent = t('patch.title')
-  if (patchDesc) patchDesc.textContent = t('patch.description')
-  const installPatchedJavaBtn = document.getElementById('btn-install-patched-java') as HTMLButtonElement | null
-  const installPatchedJavaStatus = document.getElementById('install-patched-java-status')
+
+  // Rendu des patches en accord�on (un seul ouvert � la fois)
+  renderPatches()
 
   // Traductions supplémentaires
   const el = (id: string) => document.getElementById(id)
@@ -110,38 +105,6 @@ export async function initSettings() {
   const hintCrash = document.getElementById('hint-telemetry-crash')
   if (hintCrash) hintCrash.textContent = t('settings.telemetry_crash_hint')
 
-  if (installPatchedJavaBtn) installPatchedJavaBtn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
-  if (installPatchedJavaBtn) installPatchedJavaBtn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
-
-  installPatchedJavaBtn?.addEventListener('click', async () => {
-    if (installPatchedJavaBtn) installPatchedJavaBtn.disabled = true
-    if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.installing')
-    try {
-      const path = await settings.installPatchedJava17()
-      if (path) {
-        if (installPatchedJavaBtn) installPatchedJavaBtn.style.display = 'none'
-        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.installed', { path })
-        await Dialog.show('Patched Java 17 installed. Select "Use system Java (PATH)" or restart to use it.', [{ text: 'OK', type: 'ok' }])
-      } else {
-        if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.failed')
-      }
-    } catch (err) {
-      logger.error('installPatchedJava17 failed:', err)
-      if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = 'Installation failed. See logs.'
-    } finally {
-      if (installPatchedJavaBtn) installPatchedJavaBtn.disabled = false
-    }
-  })
-  // Masque le bouton d'installation si un Java patché est déjà disponible.
-  try {
-    const resolved = await settings.resolveJava()
-    if (resolved && parseInt(resolved.version.split('.')[0], 10) >= 17) {
-      if (installPatchedJavaBtn) installPatchedJavaBtn.style.display = 'none'
-      if (installPatchedJavaStatus) installPatchedJavaStatus.innerText = t('patch.available', { version: resolved.version, path: resolved.path })
-    }
-  } catch (err) {
-    logger.error('resolveJava check failed:', err)
-  }
   const versionElem = document.getElementById('version')
   if (versionElem) versionElem.innerText = t('settings.version', { version: sysInfo.version })
 
@@ -235,7 +198,7 @@ export async function initSettings() {
     const content = document.getElementById('settings-content')
     if (content) {
       const devSection = document.createElement('section')
-      devSection.className = 'tab-content active'
+      devSection.className = 'tab-content'
       devSection.id = 'tab-dev'
       devSection.innerHTML = `
         <h3>Dev: Seasonal event date override</h3>
@@ -255,11 +218,6 @@ export async function initSettings() {
         btn.setAttribute('data-tab', 'dev')
         btn.innerHTML = '<i class="fa-solid fa-flask"></i><span>Dev</span>'
         nav.appendChild(btn)
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'))
-          btn.classList.add('active')
-          document.querySelectorAll('.tab-content').forEach((c) => (c.id === 'tab-dev' ? c.classList.add('active') : c.classList.remove('active')))
-        })
       }
       content.appendChild(devSection)
 
@@ -287,6 +245,121 @@ export async function initSettings() {
         if (statusEl) statusEl.innerText = isSeasonalActive(d) ? 'Seasonal event ACTIVE for this date' : 'Seasonal event inactive for this date'
       })
     }
+  }
+
+  function renderPatches() {
+    const list = document.getElementById('patches-list')
+    if (!list) return
+    list.innerHTML = ''
+
+    const patches = [
+      {
+        id: 'java4shell',
+        title: t('patch.title'),
+        body: () => {
+          const wrap = document.createElement('div')
+          const desc = document.createElement('p')
+          desc.style.cssText = 'margin-bottom:1rem;opacity:0.85;'
+          desc.textContent = t('patch.description')
+          wrap.appendChild(desc)
+
+          const group = document.createElement('div')
+          group.className = 'setting-group'
+          const label = document.createElement('label')
+          label.innerHTML = `<i class="fa-fw fa-solid fa-shield-halved"></i>&nbsp;&nbsp;Patched Java 17`
+          group.appendChild(label)
+
+          const btn = document.createElement('button')
+          btn.id = 'btn-install-patched-java'
+          btn.className = 'btn btn-secondary'
+          btn.style.marginTop = '8px'
+          btn.innerHTML = `<i class="fa-solid fa-download"></i> ${t('patch.install')}`
+          group.appendChild(btn)
+
+          const status = document.createElement('p')
+          status.id = 'install-patched-java-status'
+          status.style.cssText = 'margin-top:6px;font-size:0.85rem;opacity:0.8;'
+          group.appendChild(status)
+
+          wrap.appendChild(group)
+
+          // Wire button
+          const installBtn = btn
+          const statusEl = status
+          installBtn.addEventListener('click', async () => {
+            installBtn.disabled = true
+            statusEl.innerText = t('patch.installing')
+            try {
+              const path = await settings.installPatchedJava17()
+              if (path) {
+                installBtn.style.display = 'none'
+                statusEl.innerText = t('patch.installed', { path })
+                await Dialog.show('Patched Java 17 installed. Select "Use system Java (PATH)" or restart to use it.', [{ text: 'OK', type: 'ok' }])
+              } else {
+                statusEl.innerText = t('patch.failed')
+              }
+            } catch (err) {
+              logger.error('installPatchedJava17 failed:', err)
+              statusEl.innerText = t('patch.failed')
+            } finally {
+              installBtn.disabled = false
+            }
+          })
+
+          // Hide if already available
+          settings.resolveJava().then((resolved) => {
+            if (resolved && parseInt(resolved.version.split('.')[0], 10) >= 17) {
+              installBtn.style.display = 'none'
+              statusEl.innerText = t('patch.available', { version: resolved.version, path: resolved.path })
+            }
+          }).catch(() => {})
+
+          return wrap
+        }
+      }
+    ]
+
+    // Accordion: only one open at a time
+    patches.forEach((patch) => {
+      const item = document.createElement('div')
+      item.className = 'patch-item'
+      item.style.cssText = 'border:1px solid var(--line-strong);border-radius:4px;overflow:hidden;'
+
+      const header = document.createElement('button')
+      header.className = 'patch-header'
+      header.style.cssText = 'width:100%;text-align:left;padding:12px 16px;background:var(--surface);border:none;cursor:pointer;font-weight:600;display:flex;justify-content:space-between;align-items:center;color:var(--text-main);'
+      header.innerHTML = `<span>${patch.title}</span><i class="fa-solid fa-chevron-down" style="transition:transform 0.2s;"></i>`
+
+      const body = document.createElement('div')
+      body.className = 'patch-body'
+      body.style.cssText = 'padding:16px;display:none;'
+
+      item.appendChild(header)
+      item.appendChild(body)
+      list.appendChild(item)
+
+      let rendered = false
+      header.addEventListener('click', () => {
+        const isOpen = body.style.display === 'block'
+        // Close all
+        list.querySelectorAll('.patch-body').forEach((b) => ((b as HTMLElement).style.display = 'none'))
+        list.querySelectorAll('.patch-header i').forEach((i) => ((i as HTMLElement).style.transform = 'rotate(0deg)'))
+        if (!isOpen) {
+          if (!rendered) {
+            body.appendChild(patch.body())
+            rendered = true
+          }
+          body.style.display = 'block'
+          const icon = header.querySelector('i')
+          if (icon) (icon as HTMLElement).style.transform = 'rotate(180deg)'
+        } else {
+        }
+      })
+    })
+
+    // Open first by default
+    const firstHeader = list.querySelector('.patch-header') as HTMLElement | null
+    firstHeader?.click()
   }
 
   renderAccounts()
@@ -339,8 +412,6 @@ export async function initSettings() {
 
 function initUIListeners() {
   const closeBtn = document.getElementById('btn-close-settings')
-  const tabContents = document.querySelectorAll('.tab-content')
-  const tabButtons = document.querySelectorAll('.nav-btn')
   const logoutBtn = document.getElementById('btn-logout')
 
   const addSkinUrlBtn = document.getElementById('btn-add-skin-url')!
@@ -441,13 +512,15 @@ function initUIListeners() {
     document.getElementById('settings-content')?.scrollTo({ top: 0, behavior: 'smooth' })
   })
 
-  tabButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      tabButtons.forEach((b) => b.classList.remove('active'))
-      btn.classList.add('active')
-      const targetTab = btn.getAttribute('data-tab')
-      tabContents.forEach((c) => (c.id === `tab-${targetTab}` ? c.classList.add('active') : c.classList.remove('active')))
-    })
+  const nav = document.querySelector('.settings-sidebar nav')
+  nav?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.nav-btn') as HTMLElement | null
+    if (!btn) return
+    document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'))
+    btn.classList.add('active')
+    const targetTab = btn.getAttribute('data-tab')
+    document.querySelectorAll('.tab-content').forEach((c) => (c.id === `tab-${targetTab}` ? c.classList.add('active') : c.classList.remove('active')))
+    document.getElementById('settings-content')?.scrollTo({ top: 0, behavior: 'smooth' })
   })
 }
 
